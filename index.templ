@@ -1,0 +1,178 @@
+package main
+
+import "fmt"
+
+templ navLink(link, text string) {
+	<li class="nav-item">
+		<a class="nav-link" href={ templ.URL(link) }>{ text }</a>
+	</li>
+}
+
+templ navLinks() {
+	<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+		@navLink("/", "Home")
+		@navLink("/create", "Create Record")
+		@navLink("/advanced-search", "Advanced Search")
+	</ul>
+}
+
+templ devFooter() {
+	<p>
+		<strong>{ AppName } - Version { fmt.Sprint(AppVersion) }</strong>
+		<br/>
+		@templ.Raw(AppCopyright)
+	</p>
+	<p>Mode: { AppStatus }</p>
+}
+
+templ prodFooter() {
+	<div class="row justify-content-center">
+		<div class="col-12 col-md-6">
+			<blockquote>
+				&ldquo;Quote&rdquo;
+				<br/>
+				&mdash;Author
+			</blockquote>
+			@devFooter()
+		</div>
+		<div class="col-12 col-md-6 text-md-end">
+			<img src="" alt="" class="img-fluid rounded"/>
+		</div>
+	</div>
+}
+
+templ page(component templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<link rel="stylesheet" href="/css/bootstrap.min.css"/>
+			<link rel="stylesheet" href="/css/style.css"/>
+			<title>go-srm</title>
+		</head>
+		<body class="d-flex flex-column min-vh-100">
+			<h1 class="d-none">go-srm</h1>
+			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+				<div class="container-xxl">
+					<a class="navbar-brand" href="/">CTEC 127 Record Manager</a>
+					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="collapse navbar-collapse" id="navbarSupportedContent">
+						@navLinks()
+						<form class="d-flex" action="search-records.php" method="get">
+							<input class="form-control me-2" type="search" name="search" placeholder="Search" aria-label="Search"/>
+							<button class="btn btn-success" type="submit">Search</button>
+						</form>
+					</div>
+				</div>
+			</nav>
+			@component
+			<footer class="bg-body-secondary mt-auto py-3">
+				<div class="container-xxl">
+					if AppStatus == "Production" {
+						@prodFooter()
+					} else {
+						@devFooter()
+					}
+				</div>
+			</footer>
+			<script src="/js/popper.min.js"></script>
+			<script src="/js/bootstrap.min.js"></script>
+		</body>
+	</html>
+}
+
+templ recordHeaderRow(column StudentRecordColumn) {
+	<th class="p-1 pt-0">
+		<a class="btn px-2 w-100 fw-bold btn-light text-black border" href="#" title={ fmt.Sprintf("Sort by %v", column.Title) }>{ column.Label }</a>
+	</th>
+}
+
+script confirmPopup(message string) {
+    return confirm(message);
+}
+
+templ recordRowActions(record StudentRecord) {
+	<td class="p-1">
+		<a class="px-2 py-1 dropdown-toggle dropdown-symbol-none btn btn-light text-black border w-100" role="button" data-bs-toggle="dropdown" href="#" title={ "Actions for " + record.FirstName }>▼</a>
+		<div class="dropdown">
+			<ul class="dropdown-menu">
+				<li>
+					<a class="dropdown-item" href={ templ.URL(fmt.Sprintf("update-record.php?id=%v", record.Id)) }>
+						Update { record.FirstName }
+					</a>
+				</li>
+				<li>
+					<a class="dropdown-item link-danger" href={ templ.URL(fmt.Sprintf("delete-record.php?id=%v", record.Id)) } onClick={ confirmPopup("Are you sure you want to delete " + record.FirstName + "?") }>
+						Delete { record.FirstName }
+					</a>
+				</li>
+			</ul>
+		</div>
+	</td>
+}
+
+templ displayGpa(gpa float64) {
+	<span
+		if gpa <= 2 {
+			class="d-block p-1 rounded text-center text-bg-danger"
+		} else {
+			if gpa >= 3.5 {
+				class="d-block p-1 rounded text-center text-bg-success"
+			} else {
+				class="d-block p-1 rounded text-center"
+			}
+		}
+	>
+		{ fmt.Sprintf("%2.2f", gpa) }
+	</span>
+}
+
+templ recordRow(record StudentRecord) {
+	<tr>
+		@recordRowActions(record)
+		<td class="text-end">{ fmt.Sprint(record.StudentId) }</td>
+		<td><strong>{ record.FirstName }</strong></td>
+		<td><strong>{ record.LastName }</strong></td>
+		<td class="p-1">
+			@displayGpa(record.Gpa)
+		</td>
+		<td>
+			if len(record.DegreeProgram) > 0 {
+				{ record.DegreeProgram }
+			} else {
+				<em>Undeclared</em>
+			}
+		</td>
+		<td class="text-center">{ getDateString(record.GraduationDate) }</td>
+		<td class="text-center">
+			if record.FinancialAid != 0 {
+				✅
+			}
+		</td>
+		<td>{ record.Email }</td>
+		<td class="text-center">{ record.Phone }</td>
+	</tr>
+}
+
+templ indexPage(total int64, records []StudentRecord, params RecordTableParams) {
+	<main class="container-xxl my-5">
+		<h2 class="alert alert-primary">Record Management</h2>
+		<div class="table-responsive text-nowrap mb-3">
+			<table class="table table-hover table-borderless mt-1 mb-0">
+				<thead>
+					<tr>
+						<td></td>
+						for _, column := range getColumns() {
+							@recordHeaderRow(column)
+						}
+					</tr>
+				</thead>
+				for _, record := range records {
+					@recordRow(record)
+				}
+			</table>
+		</div>
+	</main>
+}

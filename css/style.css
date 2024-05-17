@@ -1,0 +1,9 @@
+/* Give enough vertical space for the record actions dropdown menu. */
+.table-responsive {
+    min-height: 200px;
+}
+
+/* Used for the record actions dropdown menu. */
+.dropdown-symbol-none::after {
+    display: none;
+}
