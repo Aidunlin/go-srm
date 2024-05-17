@@ -1,91 +1,205 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
-templ navLink(link, text string) {
-	<li class="nav-item">
-		<a class="nav-link" href={ templ.URL(link) }>{ text }</a>
+templ recordsFilterAll(params RecordTableParams) {
+	<a
+		if len(params.Filter) == 0 {
+			class="btn me-2 btn-dark fw-bold"
+			aria-current="true"
+		} else {
+			class="btn me-2 btn-light border"
+		}
+		href={ params.QueryString(nil, "filter", "page") }
+	>
+		All
+	</a>
+}
+
+templ recordsFilterLetter(letter string, params RecordTableParams) {
+	<a
+		if params.Filter == letter {
+			class="btn text-uppercase btn-dark fw-bold"
+			aria-current="true"
+		} else {
+			class="btn text-uppercase btn-light border"
+		}
+		href={ params.QueryString(ParamMap{"filter": letter}, "page") }
+		title={ fmt.Sprintf("Letter %v", letter) }
+	>
+		{ letter }
+	</a>
+}
+
+templ recordsFilterControls(params RecordTableParams) {
+	<div class="mb-3">
+		<span class="d-block">
+			Filter by <strong>Last Name</strong>
+		</span>
+		@recordsFilterAll(params)
+		for letter := 'a'; letter <= 'z'; letter++ {
+			@recordsFilterLetter(string(letter), params)
+		}
+	</div>
+}
+
+templ recordsCount(total int64) {
+	if total == 0 {
+		<p class="alert alert-warning" role="alert">
+			No records found.
+		</p>
+	} else {
+		<p class="alert alert-info" role="alert">
+			{ fmt.Sprint(total) }
+			if total == 1 {
+				record
+			} else {
+				records
+			}
+			found.
+		</p>
+	}
+}
+
+templ recordsSortMenuItem(column StudentRecordColumn, params RecordTableParams) {
+	<li>
+		<a
+			if column.Name == params.Sortby {
+				class="dropdown-item text-bg-dark"
+				if params.Order == "asc" {
+					href={ params.QueryString(ParamMap{"order": "desc"}) }
+				} else {
+					href={ params.QueryString(ParamMap{"order": "asc"}) }
+				}
+			} else {
+				class="dropdown-item text-bg-white"
+				href={ params.QueryString(ParamMap{"sortby": column.Name, "order": "asc"}) }
+			}
+			title={ fmt.Sprintf("Sort by %v", column.Title) }
+		>
+			{ column.Title }
+		</a>
 	</li>
 }
 
-templ navLinks() {
-	<ul class="navbar-nav me-auto mb-2 mb-lg-0">
-		@navLink("/", "Home")
-		@navLink("/create", "Create Record")
-		@navLink("/advanced-search", "Advanced Search")
-	</ul>
+templ recordsSortOrder(order, label string, params RecordTableParams) {
+	<a
+		if params.Order == order {
+			class="btn btn-dark border"
+			aria-current="true"
+		} else {
+			class="btn btn-light border"
+		}
+		href={ params.QueryString(ParamMap{"order": order}, "page") }
+		title={ fmt.Sprintf("%v Order", label) }
+	>
+		{ label }
+	</a>
 }
 
-templ devFooter() {
-	<p>
-		<strong>{ AppName } - Version { fmt.Sprint(AppVersion) }</strong>
-		<br/>
-		@templ.Raw(AppCopyright)
-	</p>
-	<p>Mode: { AppStatus }</p>
-}
-
-templ prodFooter() {
-	<div class="row justify-content-center">
-		<div class="col-12 col-md-6">
-			<blockquote>
-				&ldquo;Quote&rdquo;
-				<br/>
-				&mdash;Author
-			</blockquote>
-			@devFooter()
+templ recordsSortControls(params RecordTableParams) {
+	<div class="mb-3">
+		<span class="d-block">
+			Sort by <strong>Column</strong>
+			and <strong>Order</strong>
+		</span>
+		<div class="dropdown d-inline-block">
+			<button
+				class="btn btn-light border dropdown-toggle me-2"
+				title="Columns"
+				type="button"
+				data-bs-toggle="dropdown"
+			>
+				{ getColumnLabel(params.Sortby) }
+			</button>
+			<ul class="dropdown-menu">
+				for _, column := range getColumns() {
+					@recordsSortMenuItem(column, params)
+				}
+			</ul>
 		</div>
-		<div class="col-12 col-md-6 text-md-end">
-			<img src="" alt="" class="img-fluid rounded"/>
+		<div class="btn-group">
+			@recordsSortOrder("asc", "Ascending", params)
+			@recordsSortOrder("desc", "Descending", params)
 		</div>
 	</div>
 }
 
-templ page(component templ.Component) {
-	<!DOCTYPE html>
-	<html lang="en">
-		<head>
-			<meta charset="UTF-8"/>
-			<link rel="stylesheet" href="/css/bootstrap.min.css"/>
-			<link rel="stylesheet" href="/css/style.css"/>
-			<title>go-srm</title>
-		</head>
-		<body class="d-flex flex-column min-vh-100">
-			<h1 class="d-none">go-srm</h1>
-			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-				<div class="container-xxl">
-					<a class="navbar-brand" href="/">CTEC 127 Record Manager</a>
-					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-						<span class="navbar-toggler-icon"></span>
-					</button>
-					<div class="collapse navbar-collapse" id="navbarSupportedContent">
-						@navLinks()
-						<form class="d-flex" action="search-records.php" method="get">
-							<input class="form-control me-2" type="search" name="search" placeholder="Search" aria-label="Search"/>
-							<button class="btn btn-success" type="submit">Search</button>
-						</form>
-					</div>
-				</div>
-			</nav>
-			@component
-			<footer class="bg-body-secondary mt-auto py-3">
-				<div class="container-xxl">
-					if AppStatus == "Production" {
-						@prodFooter()
-					} else {
-						@devFooter()
-					}
-				</div>
-			</footer>
-			<script src="/js/popper.min.js"></script>
-			<script src="/js/bootstrap.min.js"></script>
-		</body>
-	</html>
+templ recordsPagination(params RecordTableParams, pages int) {
+	if pages > 1 {
+		<div class="mb-3">
+			<span class="d-block">
+				Page <strong>{ fmt.Sprint(params.Page) }</strong>
+				of <strong>{ fmt.Sprint(pages) }</strong>
+			</span>
+			if params.Page == 1 {
+				<span class="btn me-2 border disabled" title="Previous page">
+					Previous
+				</span>
+			} else {
+				<a
+					class="btn me-2 btn-light border"
+					href={ params.QueryString(ParamMap{"page": fmt.Sprint(params.Page - 1)}) }
+					title="Previous page"
+				>
+					Previous
+				</a>
+			}
+			<div class="d-inline me-2">
+				for i := 1; i <= pages; i++ {
+					<a
+						if params.Page == i {
+							class="btn btn-dark"
+							aria-current="true"
+						} else {
+							class="btn btn-light border"
+						}
+						href={ params.QueryString(ParamMap{"page": fmt.Sprint(i)}) }
+						title={ fmt.Sprintf("Page %v", i) }
+					>
+						{ fmt.Sprint(i) }
+					</a>
+				}
+			</div>
+			if params.Page == pages {
+				<span class="btn me-2 border disabled" title="Next page">
+					Next
+				</span>
+			} else {
+				<a
+					class="btn me-2 btn-light border"
+					href={ params.QueryString(ParamMap{"page": fmt.Sprint(params.Page + 1)}) }
+					title="Next page"
+				>
+					Next
+				</a>
+			}
+		</div>
+	}
 }
 
-templ recordHeaderRow(column StudentRecordColumn) {
+templ recordsHeaderColumn(column StudentRecordColumn, params RecordTableParams) {
 	<th class="p-1 pt-0">
-		<a class="btn px-2 w-100 fw-bold btn-light text-black border" href="#" title={ fmt.Sprintf("Sort by %v", column.Title) }>{ column.Label }</a>
+		<a
+			if column.Name == params.Sortby {
+				class="btn px-2 w-100 fw-bold btn-dark"
+				aria-current="true"
+				if params.Order == "asc" {
+					href={ params.QueryString(ParamMap{"order": "desc"}, "page") }
+				} else {
+					href={ params.QueryString(ParamMap{"order": "asc"}, "page") }
+				}
+			} else {
+				class="btn px-2 w-100 fw-bold btn-light text-black border"
+				href={ params.QueryString(ParamMap{"sortby": column.Name, "order": "asc"}, "page") }
+			}
+			title={ fmt.Sprintf("Sort by %v", column.Title) }
+		>
+			{ column.Label }
+		</a>
 	</th>
 }
 
@@ -95,7 +209,15 @@ script confirmPopup(message string) {
 
 templ recordRowActions(record StudentRecord) {
 	<td class="p-1">
-		<a class="px-2 py-1 dropdown-toggle dropdown-symbol-none btn btn-light text-black border w-100" role="button" data-bs-toggle="dropdown" href="#" title={ "Actions for " + record.FirstName }>▼</a>
+		<a
+			class="px-2 py-1 dropdown-toggle dropdown-symbol-none btn btn-light text-black border w-100"
+			role="button"
+			data-bs-toggle="dropdown"
+			href="#"
+			title={ fmt.Sprintf("Actions for %v", record.FirstName) }
+		>
+			▼
+		</a>
 		<div class="dropdown">
 			<ul class="dropdown-menu">
 				<li>
@@ -104,7 +226,11 @@ templ recordRowActions(record StudentRecord) {
 					</a>
 				</li>
 				<li>
-					<a class="dropdown-item link-danger" href={ templ.URL(fmt.Sprintf("delete-record.php?id=%v", record.Id)) } onClick={ confirmPopup("Are you sure you want to delete " + record.FirstName + "?") }>
+					<a
+						class="dropdown-item link-danger"
+						href={ templ.URL(fmt.Sprintf("delete-record.php?id=%v", record.Id)) }
+						onClick={ confirmPopup(fmt.Sprintf("Are you sure you want to delete %v?", record.FirstName)) }
+					>
 						Delete { record.FirstName }
 					</a>
 				</li>
@@ -113,66 +239,93 @@ templ recordRowActions(record StudentRecord) {
 	</td>
 }
 
-templ displayGpa(gpa float64) {
-	<span
-		if gpa <= 2 {
-			class="d-block p-1 rounded text-center text-bg-danger"
-		} else {
-			if gpa >= 3.5 {
-				class="d-block p-1 rounded text-center text-bg-success"
-			} else {
-				class="d-block p-1 rounded text-center"
-			}
-		}
-	>
-		{ fmt.Sprintf("%2.2f", gpa) }
-	</span>
-}
-
 templ recordRow(record StudentRecord) {
 	<tr>
 		@recordRowActions(record)
-		<td class="text-end">{ fmt.Sprint(record.StudentId) }</td>
-		<td><strong>{ record.FirstName }</strong></td>
-		<td><strong>{ record.LastName }</strong></td>
+		<td class="text-end">
+			{ fmt.Sprint(record.StudentId) }
+		</td>
+		<td>
+			<strong>
+				{ record.FirstName }
+			</strong>
+		</td>
+		<td>
+			<strong>
+				{ record.LastName }
+			</strong>
+		</td>
 		<td class="p-1">
-			@displayGpa(record.Gpa)
+			<span
+				if record.Gpa <= 2 {
+					class="d-block p-1 rounded text-center text-bg-danger"
+				} else {
+					if record.Gpa >= 3.5 {
+						class="d-block p-1 rounded text-center text-bg-success"
+					} else {
+						class="d-block p-1 rounded text-center"
+					}
+				}
+			>
+				{ fmt.Sprintf("%2.2f", record.Gpa) }
+			</span>
 		</td>
 		<td>
 			if len(record.DegreeProgram) > 0 {
 				{ record.DegreeProgram }
 			} else {
-				<em>Undeclared</em>
+				<em>
+					Undeclared
+				</em>
 			}
 		</td>
-		<td class="text-center">{ getDateString(record.GraduationDate) }</td>
+		<td class="text-center">
+			{ getDateString(record.GraduationDate) }
+		</td>
 		<td class="text-center">
 			if record.FinancialAid != 0 {
 				✅
 			}
 		</td>
-		<td>{ record.Email }</td>
-		<td class="text-center">{ record.Phone }</td>
+		<td>
+			{ record.Email }
+		</td>
+		<td class="text-center">
+			{ record.Phone }
+		</td>
 	</tr>
+}
+
+templ recordsTable(records []StudentRecord, params RecordTableParams) {
+	<div class="table-responsive text-nowrap mb-3">
+		<table class="table table-hover table-borderless mt-1 mb-0">
+			<thead>
+				<tr>
+					<td></td>
+					for _, column := range getColumns() {
+						@recordsHeaderColumn(column, params)
+					}
+				</tr>
+			</thead>
+			for _, record := range records {
+				@recordRow(record)
+			}
+		</table>
+	</div>
 }
 
 templ indexPage(total int64, records []StudentRecord, params RecordTableParams) {
 	<main class="container-xxl my-5">
-		<h2 class="alert alert-primary">Record Management</h2>
-		<div class="table-responsive text-nowrap mb-3">
-			<table class="table table-hover table-borderless mt-1 mb-0">
-				<thead>
-					<tr>
-						<td></td>
-						for _, column := range getColumns() {
-							@recordHeaderRow(column)
-						}
-					</tr>
-				</thead>
-				for _, record := range records {
-					@recordRow(record)
-				}
-			</table>
-		</div>
+		<h2 class="alert alert-primary">
+			Record Management
+		</h2>
+		@recordsFilterControls(params)
+		@recordsCount(total)
+		if (len(records) > 0) {
+			@recordsSortControls(params)
+			@recordsPagination(params, int(math.Ceil(float64(total)/float64(PaginateLimit))))
+			@recordsTable(records, params)
+			@recordsPagination(params, int(math.Ceil(float64(total)/float64(PaginateLimit))))
+		}
 	</main>
 }

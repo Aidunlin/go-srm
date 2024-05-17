@@ -13,10 +13,12 @@ import (
 	"github.com/labstack/echo"
 )
 
+type ParamMap = map[string]string
+
 func getDateString(value string) string {
 	date, err := time.Parse(time.DateOnly, value)
 	if err != nil {
-		return "ERROR"
+		return ""
 	}
 	return fmt.Sprintf("%02d/%02d/%04d", date.Month(), date.Day(), date.Year())
 }
@@ -36,52 +38,25 @@ type StudentRecordColumn struct {
 
 func getColumns() []StudentRecordColumn {
 	return []StudentRecordColumn{
-		StudentRecordColumn{
-			Name:  "student_id",
-			Label: "SID",
-			Title: "Student Id",
-		},
-		StudentRecordColumn{
-			Name:  "first_name",
-			Label: "First Name",
-			Title: "First Name",
-		},
-		StudentRecordColumn{
-			Name:  "last_name",
-			Label: "Last Name",
-			Title: "Last Name",
-		},
-		StudentRecordColumn{
-			Name:  "gpa",
-			Label: "GPA",
-			Title: "GPA",
-		},
-		StudentRecordColumn{
-			Name:  "degree_program",
-			Label: "Degree Program",
-			Title: "Degree Program",
-		},
-		StudentRecordColumn{
-			Name:  "graduation_date",
-			Label: "Graduation",
-			Title: "Graduation Date",
-		},
-		StudentRecordColumn{
-			Name:  "financial_aid",
-			Label: "Aid",
-			Title: "Financial Aid",
-		},
-		StudentRecordColumn{
-			Name:  "email",
-			Label: "Email",
-			Title: "Email",
-		},
-		StudentRecordColumn{
-			Name:  "phone",
-			Label: "Phone",
-			Title: "Phone",
-		},
+		{Name: "student_id", Label: "SID", Title: "Student Id"},
+		{Name: "first_name", Label: "First Name", Title: "First Name"},
+		{Name: "last_name", Label: "Last Name", Title: "Last Name"},
+		{Name: "gpa", Label: "GPA", Title: "GPA"},
+		{Name: "degree_program", Label: "Degree Program", Title: "Degree Program"},
+		{Name: "graduation_date", Label: "Graduation", Title: "Graduation Date"},
+		{Name: "financial_aid", Label: "Aid", Title: "Financial Aid"},
+		{Name: "email", Label: "Email", Title: "Email"},
+		{Name: "phone", Label: "Phone", Title: "Phone"},
 	}
+}
+
+func getColumnLabel(name string) string {
+	for _, column := range getColumns() {
+		if column.Name == name {
+			return column.Label
+		}
+	}
+	return ""
 }
 
 type StudentRecord struct {
@@ -143,7 +118,7 @@ func newRecordTableParams(params url.Values) RecordTableParams {
 
 	order := params.Get("order")
 	if !isOrdering(order) {
-		order = "ASC"
+		order = "asc"
 	}
 
 	page, err := strconv.Atoi(params.Get("page"))
@@ -163,21 +138,47 @@ func newRecordTableParams(params url.Values) RecordTableParams {
 	}
 }
 
+func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.SafeURL {
+	v := url.Values{}
+	if len(p.Filter) > 0 {
+		v.Set("filter", p.Filter)
+	}
+	v.Set("sortby", p.Sortby)
+	v.Set("order", p.Order)
+	v.Set("page", fmt.Sprint(p.Page))
+	if len(p.Search) > 0 {
+		v.Set("search", p.Search)
+	}
+	for key, value := range with {
+		v.Set(key, value)
+	}
+	for _, value := range without {
+		v.Del(value)
+	}
+	return templ.URL(fmt.Sprintf("?%v", v.Encode()))
+}
+
 func selectRecords(params RecordTableParams) (int64, []StudentRecord, error) {
 	db, err := client.Connect("localhost:3306", "root", "", "ctec")
 	if err != nil {
-		return 0, []StudentRecord{}, err
+		return 0, nil, err
 	}
 
 	whereSql := ""
 
 	if len(params.Filter) > 0 {
-		whereSql = fmt.Sprintf("WHERE last_name LIKE '%v'", params.Filter)
+		whereSql = fmt.Sprintf("WHERE last_name LIKE '%v%%'", params.Filter)
 	}
 
 	totalSql := fmt.Sprintf("SELECT COUNT(*) AS total from %v %v", DBTable, whereSql)
-	totalResult, _ := db.Execute(totalSql)
-	total, _ := totalResult.GetIntByName(0, "total")
+	totalResult, err := db.Execute(totalSql)
+	if err != nil {
+		return 0, nil, err
+	}
+	total, err := totalResult.GetIntByName(0, "total")
+	if err != nil {
+		return 0, nil, err
+	}
 
 	orderSql := fmt.Sprintf("ORDER BY %v %v", params.Sortby, params.Order)
 
@@ -185,7 +186,10 @@ func selectRecords(params RecordTableParams) (int64, []StudentRecord, error) {
 	pageSql := fmt.Sprintf("LIMIT %v OFFSET %v", PaginateLimit, offset)
 
 	recordsSql := fmt.Sprintf("SELECT * FROM %v %v %v %v", DBTable, whereSql, orderSql, pageSql)
-	recordsResult, _ := db.Execute(recordsSql)
+	recordsResult, err := db.Execute(recordsSql)
+	if err != nil {
+		return 0, nil, err
+	}
 
 	records := []StudentRecord{}
 
@@ -241,7 +245,7 @@ func main() {
 		if err != nil {
 			return c.String(http.StatusInternalServerError, fmt.Sprint(err))
 		}
-		return render(c, http.StatusOK, page(indexPage(total, records, params)))
+		return render(c, http.StatusOK, page(indexPage(total, records, params), c.Path()))
 	})
 
 	e.Logger.Fatal((e.Start(":3000")))
