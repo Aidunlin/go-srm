@@ -64,6 +64,19 @@ templ recordsCount(total int64) {
 	}
 }
 
+templ recordsMessages(messageParams MessageParams) {
+	if len(messageParams.Success) > 0 {
+		<p class="alert alert-success" role="alert">
+			{ messageParams.Success }
+		</p>
+	}
+	if len(messageParams.Error) > 0 {
+		<p class="alert alert-warning" role="alert">
+			Error: { messageParams.Error }
+		</p>
+	}
+}
+
 templ recordsSortMenuItem(column StudentRecordColumn, params RecordTableParams) {
 	<li>
 		<a
@@ -314,18 +327,19 @@ templ recordsTable(records []StudentRecord, params RecordTableParams) {
 	</div>
 }
 
-templ indexPage(total int64, records []StudentRecord, params RecordTableParams) {
+templ indexPage(total int64, records []StudentRecord, tableParams RecordTableParams, messageParams MessageParams) {
 	<main class="container-xxl my-5">
 		<h2 class="alert alert-primary">
 			Record Management
 		</h2>
-		@recordsFilterControls(params)
+		@recordsFilterControls(tableParams)
 		@recordsCount(total)
+		@recordsMessages(messageParams)
 		if (len(records) > 0) {
-			@recordsSortControls(params)
-			@recordsPagination(params, int(math.Ceil(float64(total)/float64(PaginateLimit))))
-			@recordsTable(records, params)
-			@recordsPagination(params, int(math.Ceil(float64(total)/float64(PaginateLimit))))
+			@recordsSortControls(tableParams)
+			@recordsPagination(tableParams, int(math.Ceil(float64(total)/float64(PaginateLimit))))
+			@recordsTable(records, tableParams)
+			@recordsPagination(tableParams, int(math.Ceil(float64(total)/float64(PaginateLimit))))
 		}
 	</main>
 }

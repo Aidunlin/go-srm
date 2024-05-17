@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/a-h/templ"
@@ -59,6 +60,23 @@ func getColumnLabel(name string) string {
 	return ""
 }
 
+func getDegrees() []string {
+	return []string{
+		"Advanced Manufacturing",
+		"Business Administration",
+		"Cuisine Management",
+		"Cybersecurity",
+		"Digital Media Arts",
+		"Fine Arts",
+		"Management",
+		"Marketing",
+		"Music",
+		"Network Technology",
+		"Professional Baking and Pastry Arts",
+		"Web Development",
+	}
+}
+
 type StudentRecord struct {
 	Id             int64
 	StudentId      int64
@@ -95,6 +113,33 @@ func isSortby(value string) bool {
 
 func isOrdering(value string) bool {
 	return value == "asc" || value == "desc"
+}
+
+func isDegreeProgram(value string) bool {
+	if value == "" {
+		return true
+	}
+
+	for _, degree := range getDegrees() {
+		if value == degree {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isGraduationDate(value string) bool {
+	if value == "" {
+		return true
+	}
+
+	_, err := time.Parse(time.DateOnly, value)
+	return err == nil
+}
+
+func isFinancialAid(value int) bool {
+	return value == 0 || value == 1
 }
 
 type RecordTableParams struct {
@@ -158,10 +203,10 @@ func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.S
 	return templ.URL(fmt.Sprintf("?%v", v.Encode()))
 }
 
-func selectRecords(params RecordTableParams) (int64, []StudentRecord, error) {
+func selectRecords(params RecordTableParams) (int64, []StudentRecord) {
 	db, err := client.Connect("localhost:3306", "root", "", "ctec")
 	if err != nil {
-		return 0, nil, err
+		return 0, nil
 	}
 
 	whereSql := ""
@@ -173,11 +218,11 @@ func selectRecords(params RecordTableParams) (int64, []StudentRecord, error) {
 	totalSql := fmt.Sprintf("SELECT COUNT(*) AS total from %v %v", DBTable, whereSql)
 	totalResult, err := db.Execute(totalSql)
 	if err != nil {
-		return 0, nil, err
+		return 0, nil
 	}
 	total, err := totalResult.GetIntByName(0, "total")
 	if err != nil {
-		return 0, nil, err
+		return 0, nil
 	}
 
 	orderSql := fmt.Sprintf("ORDER BY %v %v", params.Sortby, params.Order)
@@ -188,7 +233,7 @@ func selectRecords(params RecordTableParams) (int64, []StudentRecord, error) {
 	recordsSql := fmt.Sprintf("SELECT * FROM %v %v %v %v", DBTable, whereSql, orderSql, pageSql)
 	recordsResult, err := db.Execute(recordsSql)
 	if err != nil {
-		return 0, nil, err
+		return 0, nil
 	}
 
 	records := []StudentRecord{}
@@ -218,7 +263,160 @@ func selectRecords(params RecordTableParams) (int64, []StudentRecord, error) {
 			GraduationDate: graduationDate,
 		})
 	}
-	return total, records, nil
+	return total, records
+}
+
+type MessageParams struct {
+	Success string
+	Error   string
+}
+
+func newMessageParams(params url.Values) MessageParams {
+	return MessageParams{
+		Success: params.Get("success"),
+		Error:   params.Get("error"),
+	}
+}
+
+type RecordFormParams struct {
+	StudentId      int
+	FirstName      string
+	LastName       string
+	Gpa            float64
+	DegreeProgram  string
+	GraduationDate string
+	FinancialAid   int64
+	Email          string
+	Phone          string
+	Id             int
+}
+
+func (p RecordFormParams) GetMap(withId bool) ParamMap {
+	paramMap := ParamMap{
+		"student_id":      fmt.Sprint(p.StudentId),
+		"first_name":      p.FirstName,
+		"last_name":       p.LastName,
+		"email":           p.Email,
+		"phone":           p.Phone,
+		"degree_program":  p.DegreeProgram,
+		"gpa":             fmt.Sprint(p.Gpa),
+		"financial_aid":   fmt.Sprint(p.FinancialAid),
+		"graduation_date": p.GraduationDate,
+	}
+	if withId {
+		paramMap["id"] = fmt.Sprint(p.Id)
+	}
+	return paramMap
+}
+
+func newRecordFormParams(params url.Values, requireId bool) (RecordFormParams, []string) {
+	data := RecordFormParams{}
+	errors := []string{}
+
+	if requireId {
+		id, err := strconv.Atoi(params.Get("id"))
+		if err != nil {
+			errors = append(errors, "Missing or invalid record id.")
+		} else {
+			data.Id = id
+		}
+	}
+
+	studentId, err := strconv.Atoi(params.Get("student_id"))
+	if err != nil || studentId == 0 {
+		errors = append(errors, "A <strong>student ID</strong> is required.")
+	} else {
+		data.StudentId = studentId
+	}
+
+	firstName := params.Get("first_name")
+	if len(firstName) == 0 {
+		errors = append(errors, "A <strong>first name</strong> is required.")
+	} else {
+		data.FirstName = firstName
+	}
+
+	lastName := params.Get("last_name")
+	if len(lastName) == 0 {
+		errors = append(errors, "A <strong>last name</strong> is required.")
+	} else {
+		data.LastName = lastName
+	}
+
+	gpa, err := strconv.ParseFloat(params.Get("gpa"), 64)
+	if err == nil {
+		data.Gpa = gpa
+	}
+
+	degreeProgram := params.Get("degree_program")
+	if isDegreeProgram(degreeProgram) {
+		data.DegreeProgram = degreeProgram
+	} else {
+		errors = append(errors, "Invalid <strong>degree program</strong>.")
+	}
+
+	graudationDate := params.Get("graduation_date")
+	if isGraduationDate(graudationDate) {
+		data.GraduationDate = graudationDate
+	} else {
+		errors = append(errors, "Invalid <strong>graduation date</strong>.")
+	}
+
+	financialAid, err := strconv.Atoi(params.Get("financial_aid"))
+	if err != nil || !isFinancialAid(financialAid) {
+		errors = append(errors, "An option for <strong>financial aid</strong> is required.")
+	} else {
+		data.FinancialAid = int64(financialAid)
+	}
+
+	email := params.Get("email")
+	if len(email) > 0 {
+		data.Email = email
+	} else {
+		errors = append(errors, "An <strong>email address</strong> is required.")
+	}
+
+	phone := params.Get("phone")
+	if len(phone) > 0 {
+		data.Phone = phone
+	} else {
+		errors = append(errors, "A <strong>phone number</strong> is required.")
+	}
+
+	return data, errors
+}
+
+func insertRecord(params RecordFormParams) bool {
+	db, connectErr := client.Connect("localhost:3306", "root", "", "ctec")
+	if connectErr != nil {
+		return false
+	}
+
+	paramsMap := params.GetMap(false)
+
+	names := []string{}
+	placeholders := []string{}
+	values := make([]interface{}, len(paramsMap))
+
+	i := 0
+	for name, value := range paramsMap {
+		names = append(names, name)
+		placeholders = append(placeholders, "?")
+		values[i] = value
+		i++
+	}
+
+	namesString := strings.Join(names, ",")
+	placeholdersString := strings.Join(placeholders, ", ")
+
+	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)", DBTable, namesString, placeholdersString)
+	stmt, prepareErr := db.Prepare(sql)
+	if prepareErr != nil {
+		return false
+	}
+
+	_, execErr := stmt.Execute(values...)
+	return execErr == nil
 }
 
 // Renders a templ component using echo.
@@ -240,12 +438,29 @@ func main() {
 	e.Static("/js", "js")
 
 	e.GET("/", func(c echo.Context) error {
-		params := newRecordTableParams(c.QueryParams())
-		total, records, err := selectRecords(params)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Sprint(err))
+		queryParams := c.QueryParams()
+		tableParams := newRecordTableParams(queryParams)
+		total, records := selectRecords(tableParams)
+		messageParams := newMessageParams(queryParams)
+		return render(c, http.StatusOK, page(indexPage(total, records, tableParams, messageParams), c.Path()))
+	})
+
+	e.GET("/create", func(c echo.Context) error {
+		return render(c, http.StatusOK, page(createPage(RecordFormParams{}, []string{}), c.Path()))
+	})
+
+	e.POST("/create", func(c echo.Context) error {
+		formParams, _ := c.FormParams()
+		params, errors := newRecordFormParams(formParams, false)
+		if len(errors) > 0 {
+			return render(c, http.StatusOK, page(createPage(params, errors), c.Path()))
 		}
-		return render(c, http.StatusOK, page(indexPage(total, records, params), c.Path()))
+		success := insertRecord(params)
+		if success {
+			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=The record for %v has been created.", params.FirstName))
+		} else {
+			return render(c, http.StatusOK, page(createPage(params, []string{"Could not save that record!"}), c.Path()))
+		}
 	})
 
 	e.Logger.Fatal((e.Start(":3000")))
