@@ -240,7 +240,7 @@ templ recordRowActions(record StudentRecord) {
 				<li>
 					<a
 						class="dropdown-item link-danger"
-						href={ templ.URL(fmt.Sprintf("delete-record.php?id=%v", record.Id)) }
+						href={ templ.URL(fmt.Sprintf("/delete/%v", record.Id)) }
 						onClick={ confirmPopup(fmt.Sprintf("Are you sure you want to delete %v?", record.FirstName)) }
 					>
 						Delete { record.FirstName }

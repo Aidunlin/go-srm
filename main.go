@@ -7,13 +7,17 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/a-h/templ"
-	"github.com/go-mysql-org/go-mysql/client"
 	"github.com/labstack/echo"
 )
+
+const AppCopyright = "&copy; 2024 Aidan Linerud"
+const AppVersion = 3.0
+const AppName = "CTEC 127 Record Manager"
+const AppStatus = "Development"
+const PaginateLimit = 10
 
 type ParamMap = map[string]string
 
@@ -24,13 +28,6 @@ func displayDate(value string) string {
 	}
 	return fmt.Sprintf("%02d/%02d/%04d", date.Month(), date.Day(), date.Year())
 }
-
-const AppCopyright = "&copy; 2024 Aidan Linerud"
-const AppVersion = 3.0
-const AppName = "CTEC 127 Record Manager"
-const DBTable = "student_v2"
-const AppStatus = "Development"
-const PaginateLimit = 10
 
 func getTotalPages(totalResults int64) int {
 	return int(math.Ceil(float64(totalResults) / float64(PaginateLimit)))
@@ -80,19 +77,6 @@ func getDegrees() []string {
 		"Professional Baking and Pastry Arts",
 		"Web Development",
 	}
-}
-
-type StudentRecord struct {
-	Id             int64
-	StudentId      int64
-	FirstName      string
-	LastName       string
-	Email          string
-	Phone          string
-	DegreeProgram  string
-	Gpa            float64
-	FinancialAid   int64
-	GraduationDate string
 }
 
 func getAlphabet() []string {
@@ -208,67 +192,17 @@ func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.S
 	return templ.URL(fmt.Sprintf("?%v", v.Encode()))
 }
 
-func selectRecords(params RecordTableParams) (int64, []StudentRecord) {
-	db, err := client.Connect("localhost:3306", "root", "", "ctec")
-	if err != nil {
-		return 0, nil
-	}
-
-	whereSql := ""
-
-	if len(params.Filter) > 0 {
-		whereSql = fmt.Sprintf("WHERE last_name LIKE '%v%%'", params.Filter)
-	}
-
-	totalSql := fmt.Sprintf("SELECT COUNT(*) AS total from %v %v", DBTable, whereSql)
-	totalResult, err := db.Execute(totalSql)
-	if err != nil {
-		return 0, nil
-	}
-	total, err := totalResult.GetIntByName(0, "total")
-	if err != nil {
-		return 0, nil
-	}
-
-	orderSql := fmt.Sprintf("ORDER BY %v %v", params.Sortby, params.Order)
-
-	offset := (params.Page - 1) * PaginateLimit
-	pageSql := fmt.Sprintf("LIMIT %v OFFSET %v", PaginateLimit, offset)
-
-	recordsSql := fmt.Sprintf("SELECT * FROM %v %v %v %v", DBTable, whereSql, orderSql, pageSql)
-	recordsResult, err := db.Execute(recordsSql)
-	if err != nil {
-		return 0, nil
-	}
-
-	records := []StudentRecord{}
-
-	for i := range recordsResult.Values {
-		id, _ := recordsResult.GetIntByName(i, "id")
-		studentId, _ := recordsResult.GetIntByName(i, "student_id")
-		firstName, _ := recordsResult.GetStringByName(i, "first_name")
-		lastName, _ := recordsResult.GetStringByName(i, "last_name")
-		email, _ := recordsResult.GetStringByName(i, "email")
-		phone, _ := recordsResult.GetStringByName(i, "phone")
-		degreeProgram, _ := recordsResult.GetStringByName(i, "degree_program")
-		gpa, _ := recordsResult.GetFloatByName(i, "gpa")
-		financialAid, _ := recordsResult.GetIntByName(i, "financial_aid")
-		graduationDate, _ := recordsResult.GetStringByName(i, "graduation_date")
-
-		records = append(records, StudentRecord{
-			Id:             id,
-			StudentId:      studentId,
-			FirstName:      firstName,
-			LastName:       lastName,
-			Email:          email,
-			Phone:          phone,
-			DegreeProgram:  degreeProgram,
-			Gpa:            gpa,
-			FinancialAid:   financialAid,
-			GraduationDate: graduationDate,
-		})
-	}
-	return total, records
+type StudentRecord struct {
+	Id             int64
+	StudentId      int64
+	FirstName      string
+	LastName       string
+	Email          string
+	Phone          string
+	DegreeProgram  string
+	Gpa            float64
+	FinancialAid   int64
+	GraduationDate string
 }
 
 type MessageParams struct {
@@ -391,39 +325,6 @@ func newRecordFormParams(params url.Values, requireId bool) (RecordFormParams, [
 	return data, errors
 }
 
-func insertRecord(params RecordFormParams) bool {
-	db, connectErr := client.Connect("localhost:3306", "root", "", "ctec")
-	if connectErr != nil {
-		return false
-	}
-
-	paramsMap := params.GetMap(false)
-
-	names := []string{}
-	placeholders := []string{}
-	values := make([]interface{}, len(paramsMap))
-
-	i := 0
-	for name, value := range paramsMap {
-		names = append(names, name)
-		placeholders = append(placeholders, "?")
-		values[i] = value
-		i++
-	}
-
-	namesString := strings.Join(names, ",")
-	placeholdersString := strings.Join(placeholders, ", ")
-
-	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)", DBTable, namesString, placeholdersString)
-	stmt, prepareErr := db.Prepare(sql)
-	if prepareErr != nil {
-		return false
-	}
-
-	_, execErr := stmt.Execute(values...)
-	return execErr == nil
-}
-
 // Renders a templ component using echo.
 func render(c echo.Context, code int, t templ.Component) error {
 	buf := templ.GetBuffer()
@@ -462,9 +363,22 @@ func main() {
 		}
 		success := insertRecord(params)
 		if success {
-			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=The record for %v has been created.", params.FirstName))
+			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v created!", params.FirstName))
 		} else {
 			return render(c, http.StatusOK, createPage(params, []string{"Could not save that record!"}))
+		}
+	})
+
+	e.GET("/delete/:id", func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/?error=Invalid id.")
+		}
+		success := deleteRecord(id)
+		if success {
+			return c.Redirect(http.StatusSeeOther, "/?success=Deleted record.")
+		} else {
+			return c.Redirect(http.StatusSeeOther, "/?error=Could not delete record!")
 		}
 	})
 

@@ -860,7 +860,7 @@ func recordRowActions(record StudentRecord) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var43 templ.SafeURL = templ.URL(fmt.Sprintf("delete-record.php?id=%v", record.Id))
+		var templ_7745c5c3_Var43 templ.SafeURL = templ.URL(fmt.Sprintf("/delete/%v", record.Id))
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var43)))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
