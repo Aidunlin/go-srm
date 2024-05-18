@@ -1,20 +1,21 @@
-package main
+package db
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/Aidunlin/go-srm/app"
 	"github.com/go-mysql-org/go-mysql/client"
 )
 
-const DBAddr = "localhost:3306"
-const DBUser = "root"
-const DBPassword = ""
-const DBName = "ctec"
-const DBTable = "student_v2"
+const dbAddr = "localhost:3306"
+const dbUser = "root"
+const dbPassword = ""
+const dbName = "ctec"
+const dbTable = "student_v2"
 
-func selectRecords(params RecordTableParams) (int64, []StudentRecord) {
-	db, connectErr := client.Connect(DBAddr, DBUser, DBPassword, DBName)
+func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
+	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
 	if connectErr != nil {
 		return 0, nil
 	}
@@ -26,7 +27,7 @@ func selectRecords(params RecordTableParams) (int64, []StudentRecord) {
 		whereSql = fmt.Sprintf("WHERE last_name LIKE '%v%%'", params.Filter)
 	}
 
-	totalSql := fmt.Sprintf("SELECT COUNT(*) AS total from %v %v", DBTable, whereSql)
+	totalSql := fmt.Sprintf("SELECT COUNT(*) AS total from %v %v", dbTable, whereSql)
 	totalResult, totalExecErr := db.Execute(totalSql)
 	if totalExecErr != nil {
 		return 0, nil
@@ -38,16 +39,16 @@ func selectRecords(params RecordTableParams) (int64, []StudentRecord) {
 
 	orderSql := fmt.Sprintf("ORDER BY %v %v", params.Sortby, params.Order)
 
-	offset := (params.Page - 1) * PaginateLimit
-	pageSql := fmt.Sprintf("LIMIT %v OFFSET %v", PaginateLimit, offset)
+	offset := (params.Page - 1) * app.PaginateLimit
+	pageSql := fmt.Sprintf("LIMIT %v OFFSET %v", app.PaginateLimit, offset)
 
-	recordsSql := fmt.Sprintf("SELECT * FROM %v %v %v %v", DBTable, whereSql, orderSql, pageSql)
+	recordsSql := fmt.Sprintf("SELECT * FROM %v %v %v %v", dbTable, whereSql, orderSql, pageSql)
 	recordsResult, recordsExecErr := db.Execute(recordsSql)
 	if recordsExecErr != nil {
 		return 0, nil
 	}
 
-	records := []StudentRecord{}
+	records := []app.StudentRecord{}
 
 	for i := range recordsResult.Values {
 		id, _ := recordsResult.GetIntByName(i, "id")
@@ -61,7 +62,7 @@ func selectRecords(params RecordTableParams) (int64, []StudentRecord) {
 		financialAid, _ := recordsResult.GetIntByName(i, "financial_aid")
 		graduationDate, _ := recordsResult.GetStringByName(i, "graduation_date")
 
-		records = append(records, StudentRecord{
+		records = append(records, app.StudentRecord{
 			Id:             id,
 			StudentId:      studentId,
 			FirstName:      firstName,
@@ -77,8 +78,8 @@ func selectRecords(params RecordTableParams) (int64, []StudentRecord) {
 	return total, records
 }
 
-func insertRecord(params RecordFormParams) bool {
-	db, connectErr := client.Connect(DBAddr, DBUser, DBPassword, DBName)
+func InsertRecord(params app.RecordFormParams) bool {
+	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
 	if connectErr != nil {
 		return false
 	}
@@ -101,7 +102,7 @@ func insertRecord(params RecordFormParams) bool {
 	namesString := strings.Join(names, ",")
 	placeholdersString := strings.Join(placeholders, ", ")
 
-	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)", DBTable, namesString, placeholdersString)
+	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)", dbTable, namesString, placeholdersString)
 	stmt, prepareErr := db.Prepare(sql)
 	if prepareErr != nil {
 		return false
@@ -111,14 +112,14 @@ func insertRecord(params RecordFormParams) bool {
 	return execErr == nil
 }
 
-func deleteRecord(id int) bool {
-	db, connectErr := client.Connect(DBAddr, DBUser, DBPassword, DBName)
+func DeleteRecord(id int) bool {
+	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
 	if connectErr != nil {
 		return false
 	}
 	defer db.Close()
 
-	sql := fmt.Sprintf("DELETE FROM %v WHERE id = ?", DBTable)
+	sql := fmt.Sprintf("DELETE FROM %v WHERE id = ?", dbTable)
 	stmt, prepareErr := db.Prepare(sql)
 	if prepareErr != nil {
 		return false

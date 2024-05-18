@@ -1,10 +1,12 @@
-package main
+package templates
 
 import (
 	"fmt"
+
+	"github.com/Aidunlin/go-srm/app"
 )
 
-templ recordsFilterAll(params RecordTableParams) {
+templ recordsFilterAll(params app.RecordTableParams) {
 	<a
 		if len(params.Filter) == 0 {
 			class="btn me-2 btn-dark fw-bold"
@@ -18,7 +20,7 @@ templ recordsFilterAll(params RecordTableParams) {
 	</a>
 }
 
-templ recordsFilterLetter(letter string, params RecordTableParams) {
+templ recordsFilterLetter(letter string, params app.RecordTableParams) {
 	<a
 		if params.Filter == letter {
 			class="btn text-uppercase btn-dark fw-bold"
@@ -26,14 +28,14 @@ templ recordsFilterLetter(letter string, params RecordTableParams) {
 		} else {
 			class="btn text-uppercase btn-light border"
 		}
-		href={ params.QueryString(ParamMap{"filter": letter}, "page") }
+		href={ params.QueryString(app.ParamMap{"filter": letter}, "page") }
 		title={ fmt.Sprintf("Letter %v", letter) }
 	>
 		{ letter }
 	</a>
 }
 
-templ recordsFilterControls(params RecordTableParams) {
+templ recordsFilterControls(params app.RecordTableParams) {
 	<div class="mb-3">
 		<span class="d-block">
 			Filter by <strong>Last Name</strong>
@@ -63,7 +65,7 @@ templ recordsCount(totalRecords int64) {
 	}
 }
 
-templ recordsMessages(messageParams MessageParams) {
+templ recordsMessages(messageParams app.MessageParams) {
 	if len(messageParams.Success) > 0 {
 		<p class="alert alert-success" role="alert">
 			{ messageParams.Success }
@@ -76,19 +78,19 @@ templ recordsMessages(messageParams MessageParams) {
 	}
 }
 
-templ recordsSortMenuItem(column StudentRecordColumn, params RecordTableParams) {
+templ recordsSortMenuItem(column app.StudentRecordColumn, params app.RecordTableParams) {
 	<li>
 		<a
 			if column.Name == params.Sortby {
 				class="dropdown-item text-bg-dark"
 				if params.Order == "asc" {
-					href={ params.QueryString(ParamMap{"order": "desc"}) }
+					href={ params.QueryString(app.ParamMap{"order": "desc"}) }
 				} else {
-					href={ params.QueryString(ParamMap{"order": "asc"}) }
+					href={ params.QueryString(app.ParamMap{"order": "asc"}) }
 				}
 			} else {
 				class="dropdown-item text-bg-white"
-				href={ params.QueryString(ParamMap{"sortby": column.Name, "order": "asc"}) }
+				href={ params.QueryString(app.ParamMap{"sortby": column.Name, "order": "asc"}) }
 			}
 			title={ fmt.Sprintf("Sort by %v", column.Title) }
 		>
@@ -97,7 +99,7 @@ templ recordsSortMenuItem(column StudentRecordColumn, params RecordTableParams) 
 	</li>
 }
 
-templ recordsSortOrder(order, label string, params RecordTableParams) {
+templ recordsSortOrder(order, label string, params app.RecordTableParams) {
 	<a
 		if params.Order == order {
 			class="btn btn-dark border"
@@ -105,14 +107,14 @@ templ recordsSortOrder(order, label string, params RecordTableParams) {
 		} else {
 			class="btn btn-light border"
 		}
-		href={ params.QueryString(ParamMap{"order": order}, "page") }
+		href={ params.QueryString(app.ParamMap{"order": order}, "page") }
 		title={ fmt.Sprintf("%v Order", label) }
 	>
 		{ label }
 	</a>
 }
 
-templ recordsSortControls(params RecordTableParams) {
+templ recordsSortControls(params app.RecordTableParams) {
 	<div class="mb-3">
 		<span class="d-block">
 			Sort by <strong>Column</strong>
@@ -125,10 +127,10 @@ templ recordsSortControls(params RecordTableParams) {
 				type="button"
 				data-bs-toggle="dropdown"
 			>
-				{ getColumnLabel(params.Sortby) }
+				{ app.GetColumnLabel(params.Sortby) }
 			</button>
 			<ul class="dropdown-menu">
-				for _, column := range getColumns() {
+				for _, column := range app.GetColumns() {
 					@recordsSortMenuItem(column, params)
 				}
 			</ul>
@@ -140,7 +142,7 @@ templ recordsSortControls(params RecordTableParams) {
 	</div>
 }
 
-templ recordsPagination(params RecordTableParams, pages int) {
+templ recordsPagination(params app.RecordTableParams, pages int) {
 	if pages > 1 {
 		<div class="mb-3">
 			<span class="d-block">
@@ -154,7 +156,7 @@ templ recordsPagination(params RecordTableParams, pages int) {
 			} else {
 				<a
 					class="btn me-2 btn-light border"
-					href={ params.QueryString(ParamMap{"page": fmt.Sprint(params.Page - 1)}) }
+					href={ params.QueryString(app.ParamMap{"page": fmt.Sprint(params.Page - 1)}) }
 					title="Previous page"
 				>
 					Previous
@@ -169,7 +171,7 @@ templ recordsPagination(params RecordTableParams, pages int) {
 						} else {
 							class="btn btn-light border"
 						}
-						href={ params.QueryString(ParamMap{"page": fmt.Sprint(i)}) }
+						href={ params.QueryString(app.ParamMap{"page": fmt.Sprint(i)}) }
 						title={ fmt.Sprintf("Page %v", i) }
 					>
 						{ fmt.Sprint(i) }
@@ -183,7 +185,7 @@ templ recordsPagination(params RecordTableParams, pages int) {
 			} else {
 				<a
 					class="btn me-2 btn-light border"
-					href={ params.QueryString(ParamMap{"page": fmt.Sprint(params.Page + 1)}) }
+					href={ params.QueryString(app.ParamMap{"page": fmt.Sprint(params.Page + 1)}) }
 					title="Next page"
 				>
 					Next
@@ -193,20 +195,20 @@ templ recordsPagination(params RecordTableParams, pages int) {
 	}
 }
 
-templ recordsHeaderColumn(column StudentRecordColumn, params RecordTableParams) {
+templ recordsHeaderColumn(column app.StudentRecordColumn, params app.RecordTableParams) {
 	<th class="p-1 pt-0">
 		<a
 			if column.Name == params.Sortby {
 				class="btn px-2 w-100 fw-bold btn-dark"
 				aria-current="true"
 				if params.Order == "asc" {
-					href={ params.QueryString(ParamMap{"order": "desc"}, "page") }
+					href={ params.QueryString(app.ParamMap{"order": "desc"}, "page") }
 				} else {
-					href={ params.QueryString(ParamMap{"order": "asc"}, "page") }
+					href={ params.QueryString(app.ParamMap{"order": "asc"}, "page") }
 				}
 			} else {
 				class="btn px-2 w-100 fw-bold btn-light text-black border"
-				href={ params.QueryString(ParamMap{"sortby": column.Name, "order": "asc"}, "page") }
+				href={ params.QueryString(app.ParamMap{"sortby": column.Name, "order": "asc"}, "page") }
 			}
 			title={ fmt.Sprintf("Sort by %v", column.Title) }
 		>
@@ -219,7 +221,7 @@ script confirmPopup(message string) {
     return confirm(message);
 }
 
-templ recordRowActions(record StudentRecord) {
+templ recordRowActions(record app.StudentRecord) {
 	<td class="p-1">
 		<a
 			class="px-2 py-1 dropdown-toggle dropdown-symbol-none btn btn-light text-black border w-100"
@@ -251,7 +253,7 @@ templ recordRowActions(record StudentRecord) {
 	</td>
 }
 
-templ recordRow(record StudentRecord) {
+templ recordRow(record app.StudentRecord) {
 	<tr>
 		@recordRowActions(record)
 		<td class="text-end">
@@ -292,7 +294,7 @@ templ recordRow(record StudentRecord) {
 			}
 		</td>
 		<td class="text-center">
-			{ displayDate(record.GraduationDate) }
+			{ app.DisplayDate(record.GraduationDate) }
 		</td>
 		<td class="text-center">
 			if record.FinancialAid != 0 {
@@ -308,13 +310,13 @@ templ recordRow(record StudentRecord) {
 	</tr>
 }
 
-templ recordsTable(records []StudentRecord, params RecordTableParams) {
+templ recordsTable(records []app.StudentRecord, params app.RecordTableParams) {
 	<div class="table-responsive text-nowrap mb-3">
 		<table class="table table-hover table-borderless mt-1 mb-0">
 			<thead>
 				<tr>
 					<td></td>
-					for _, column := range getColumns() {
+					for _, column := range app.GetColumns() {
 						@recordsHeaderColumn(column, params)
 					}
 				</tr>
@@ -326,7 +328,7 @@ templ recordsTable(records []StudentRecord, params RecordTableParams) {
 	</div>
 }
 
-templ indexPage(totalRecords int64, records []StudentRecord, tableParams RecordTableParams, messageParams MessageParams) {
+templ IndexPage(totalRecords int64, records []app.StudentRecord, tableParams app.RecordTableParams, messageParams app.MessageParams) {
 	@page("/", "Record Management") {
 		<main class="container-xxl my-5">
 			<h2 class="alert alert-primary">
@@ -337,9 +339,9 @@ templ indexPage(totalRecords int64, records []StudentRecord, tableParams RecordT
 			@recordsMessages(messageParams)
 			if (len(records) > 0) {
 				@recordsSortControls(tableParams)
-				@recordsPagination(tableParams, getTotalPages(totalRecords))
+				@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
 				@recordsTable(records, tableParams)
-				@recordsPagination(tableParams, getTotalPages(totalRecords))
+				@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
 			}
 		</main>
 	}

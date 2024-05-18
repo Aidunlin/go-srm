@@ -1,7 +1,9 @@
-package main
+package templates
 
 import (
 	"fmt"
+
+	"github.com/Aidunlin/go-srm/app"
 )
 
 templ navLink(link, text, path string) {
@@ -22,11 +24,11 @@ templ navLink(link, text, path string) {
 
 templ devFooter() {
 	<p>
-		<strong>{ AppName } - Version { fmt.Sprint(AppVersion) }</strong>
+		<strong>{ app.AppName } - Version { fmt.Sprint(app.AppVersion) }</strong>
 		<br/>
-		@templ.Raw(AppCopyright)
+		@templ.Raw(app.AppCopyright)
 	</p>
-	<p>Mode: { AppStatus }</p>
+	<p>Mode: { app.AppStatus }</p>
 }
 
 templ prodFooter() {
@@ -63,7 +65,7 @@ templ page(path, title string) {
 			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 				<div class="container-xxl">
 					<a class="navbar-brand" href="/">
-						{ AppName }
+						{ app.AppName }
 					</a>
 					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 						<span class="navbar-toggler-icon"></span>
@@ -86,7 +88,7 @@ templ page(path, title string) {
 			{ children... }
 			<footer class="bg-body-secondary mt-auto py-3">
 				<div class="container-xxl">
-					if AppStatus == "Production" {
+					if app.AppStatus == "Production" {
 						@prodFooter()
 					} else {
 						@devFooter()

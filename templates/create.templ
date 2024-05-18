@@ -1,10 +1,12 @@
-package main
+package templates
 
 import (
 	"fmt"
+
+	"github.com/Aidunlin/go-srm/app"
 )
 
-templ form(params RecordFormParams, defaultDegreeLabel string, buttonLabel string) {
+templ form(params app.RecordFormParams, defaultDegreeLabel string, buttonLabel string) {
 	<form method="post">
 		<div class="mb-3">
 			<label class="col-form-label" for="student_id">
@@ -57,7 +59,7 @@ templ form(params RecordFormParams, defaultDegreeLabel string, buttonLabel strin
 				<option value="">
 					{ defaultDegreeLabel }
 				</option>
-				for _, degree := range getDegrees() {
+				for _, degree := range app.GetDegrees() {
 					<option value={ degree } selected?={ params.DegreeProgram == degree }>
 						{ degree }
 					</option>
@@ -131,7 +133,7 @@ templ displayErrors(errors []string) {
 	</div>
 }
 
-templ createPage(params RecordFormParams, errors []string) {
+templ CreatePage(params app.RecordFormParams, errors []string) {
 	@page("/create", "Create Record") {
 		<main class="container">
 			<div class="row justify-content-center my-5">
