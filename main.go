@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 const AppCopyright = "&copy; 2024 Aidan Linerud"
@@ -340,6 +341,7 @@ func render(c echo.Context, code int, t templ.Component) error {
 // Entry point for the web server.
 func main() {
 	e := echo.New()
+	e.Use(middleware.Logger())
 	e.Static("/css", "css")
 	e.Static("/js", "js")
 
