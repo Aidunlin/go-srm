@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 )
 
 templ recordsFilterAll(params RecordTableParams) {
@@ -46,15 +45,15 @@ templ recordsFilterControls(params RecordTableParams) {
 	</div>
 }
 
-templ recordsCount(total int64) {
-	if total == 0 {
+templ recordsCount(totalRecords int64) {
+	if totalRecords == 0 {
 		<p class="alert alert-warning" role="alert">
 			No records found.
 		</p>
 	} else {
 		<p class="alert alert-info" role="alert">
-			{ fmt.Sprint(total) }
-			if total == 1 {
+			{ fmt.Sprint(totalRecords) }
+			if totalRecords == 1 {
 				record
 			} else {
 				records
@@ -293,7 +292,7 @@ templ recordRow(record StudentRecord) {
 			}
 		</td>
 		<td class="text-center">
-			{ getDateString(record.GraduationDate) }
+			{ displayDate(record.GraduationDate) }
 		</td>
 		<td class="text-center">
 			if record.FinancialAid != 0 {
@@ -327,19 +326,21 @@ templ recordsTable(records []StudentRecord, params RecordTableParams) {
 	</div>
 }
 
-templ indexPage(total int64, records []StudentRecord, tableParams RecordTableParams, messageParams MessageParams) {
-	<main class="container-xxl my-5">
-		<h2 class="alert alert-primary">
-			Record Management
-		</h2>
-		@recordsFilterControls(tableParams)
-		@recordsCount(total)
-		@recordsMessages(messageParams)
-		if (len(records) > 0) {
-			@recordsSortControls(tableParams)
-			@recordsPagination(tableParams, int(math.Ceil(float64(total)/float64(PaginateLimit))))
-			@recordsTable(records, tableParams)
-			@recordsPagination(tableParams, int(math.Ceil(float64(total)/float64(PaginateLimit))))
-		}
-	</main>
+templ indexPage(totalRecords int64, records []StudentRecord, tableParams RecordTableParams, messageParams MessageParams) {
+	@page("/", "Record Management") {
+		<main class="container-xxl my-5">
+			<h2 class="alert alert-primary">
+				Record Management
+			</h2>
+			@recordsFilterControls(tableParams)
+			@recordsCount(totalRecords)
+			@recordsMessages(messageParams)
+			if (len(records) > 0) {
+				@recordsSortControls(tableParams)
+				@recordsPagination(tableParams, getTotalPages(totalRecords))
+				@recordsTable(records, tableParams)
+				@recordsPagination(tableParams, getTotalPages(totalRecords))
+			}
+		</main>
+	}
 }

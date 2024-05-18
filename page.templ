@@ -43,7 +43,7 @@ templ prodFooter() {
 	</div>
 }
 
-templ page(component templ.Component, path string) {
+templ page(path, title string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -51,17 +51,17 @@ templ page(component templ.Component, path string) {
 			<link rel="stylesheet" href="/css/bootstrap.min.css"/>
 			<link rel="stylesheet" href="/css/style.css"/>
 			<title>
-				go-srm
+				{ title }
 			</title>
 		</head>
 		<body class="d-flex flex-column min-vh-100">
 			<h1 class="d-none">
-				go-srm
+				{ title }
 			</h1>
 			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 				<div class="container-xxl">
 					<a class="navbar-brand" href="/">
-						CTEC 127 Record Manager
+						{ AppName }
 					</a>
 					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 						<span class="navbar-toggler-icon"></span>
@@ -81,7 +81,7 @@ templ page(component templ.Component, path string) {
 					</div>
 				</div>
 			</nav>
-			@component
+			{ children... }
 			<footer class="bg-body-secondary mt-auto py-3">
 				<div class="container-xxl">
 					if AppStatus == "Production" {

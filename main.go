@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"slices"
@@ -16,7 +17,7 @@ import (
 
 type ParamMap = map[string]string
 
-func getDateString(value string) string {
+func displayDate(value string) string {
 	date, err := time.Parse(time.DateOnly, value)
 	if err != nil {
 		return ""
@@ -30,6 +31,10 @@ const AppName = "CTEC 127 Record Manager"
 const DBTable = "student_v2"
 const AppStatus = "Development"
 const PaginateLimit = 10
+
+func getTotalPages(totalResults int64) int {
+	return int(math.Ceil(float64(totalResults) / float64(PaginateLimit)))
+}
 
 type StudentRecordColumn struct {
 	Name  string
@@ -442,24 +447,24 @@ func main() {
 		tableParams := newRecordTableParams(queryParams)
 		total, records := selectRecords(tableParams)
 		messageParams := newMessageParams(queryParams)
-		return render(c, http.StatusOK, page(indexPage(total, records, tableParams, messageParams), c.Path()))
+		return render(c, http.StatusOK, indexPage(total, records, tableParams, messageParams))
 	})
 
 	e.GET("/create", func(c echo.Context) error {
-		return render(c, http.StatusOK, page(createPage(RecordFormParams{}, []string{}), c.Path()))
+		return render(c, http.StatusOK, createPage(RecordFormParams{}, []string{}))
 	})
 
 	e.POST("/create", func(c echo.Context) error {
 		formParams, _ := c.FormParams()
 		params, errors := newRecordFormParams(formParams, false)
 		if len(errors) > 0 {
-			return render(c, http.StatusOK, page(createPage(params, errors), c.Path()))
+			return render(c, http.StatusOK, createPage(params, errors))
 		}
 		success := insertRecord(params)
 		if success {
 			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=The record for %v has been created.", params.FirstName))
 		} else {
-			return render(c, http.StatusOK, page(createPage(params, []string{"Could not save that record!"}), c.Path()))
+			return render(c, http.StatusOK, createPage(params, []string{"Could not save that record!"}))
 		}
 	})
 
