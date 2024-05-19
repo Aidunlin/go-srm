@@ -1,0 +1,113 @@
+package templates
+
+import (
+	"fmt"
+
+	"github.com/Aidunlin/go-srm/app"
+)
+
+templ form(record app.StudentRecord, defaultDegreeLabel string, buttonLabel string) {
+	<form method="post">
+		<div class="mb-3">
+			<label class="col-form-label" for="student_id">
+				Student ID
+			</label>
+			<input
+				class="form-control"
+				type="number"
+				id="student_id"
+				name="student_id"
+				if record.StudentId > 0 {
+					value={ fmt.Sprint(record.StudentId) }
+				}
+			/>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="first_name">
+				First Name
+			</label>
+			<input class="form-control" type="text" id="first_name" name="first_name" value={ record.FirstName }/>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="last_name">
+				Last Name
+			</label>
+			<input class="form-control" type="text" id="last_name" name="last_name" value={ record.LastName }/>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="gpa">
+				GPA
+			</label>
+			<input
+				class="form-control"
+				type="number"
+				id="gpa"
+				name="gpa"
+				step="0.01"
+				min="0"
+				max="4"
+				if record.Gpa > 0 {
+					value={ fmt.Sprintf("%2.2f", record.Gpa) }
+				}
+			/>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="degree_program">
+				Degree Program
+			</label>
+			<select class="form-select" name="degree_program" id="degree_program">
+				<option value="">
+					{ defaultDegreeLabel }
+				</option>
+				for _, degree := range app.GetDegrees() {
+					<option value={ degree } selected?={ record.DegreeProgram == degree }>
+						{ degree }
+					</option>
+				}
+			</select>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="graduation_date">
+				Graduation Date
+			</label>
+			<input class="form-control" type="date" name="graduation_date" id="graduation_date" value={ record.GraduationDate }/>
+		</div>
+		<fieldset class="mb-2">
+			<legend class="col-form-label">
+				Financial Aid
+			</legend>
+			<div class="form-check">
+				<input class="form-check-input" type="radio" name="financial_aid" id="aid-yes" value="1" checked?={ record.FinancialAid != 0 }/>
+				<label class="form-label" for="aid-yes">
+					Yes
+				</label>
+			</div>
+			<div class="form-check">
+				<input class="form-check-input" type="radio" name="financial_aid" id="aid-no" value="0" checked?={ record.FinancialAid == 0 }/>
+				<label class="form-label" for="aid-no">
+					No
+				</label>
+			</div>
+		</fieldset>
+		<div class="mb-3">
+			<label class="col-form-label" for="email">
+				Email
+			</label>
+			<input class="form-control" type="text" id="email" name="email" value={ record.Email }/>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="phone">
+				Phone
+			</label>
+			<input class="form-control" type="text" id="phone" name="phone" value={ record.Phone }/>
+		</div>
+		<div class="mt-4 mb-3">
+			<a class="btn btn-light border me-2" href="/">
+				Cancel
+			</a>
+			<button class="btn btn-dark" type="submit">
+				{ buttonLabel }
+			</button>
+		</div>
+	</form>
+}

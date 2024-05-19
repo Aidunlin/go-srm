@@ -191,6 +191,7 @@ func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.S
 }
 
 type StudentRecord struct {
+	// Only set when selecting multiple records.
 	Id             int64
 	StudentId      int64
 	FirstName      string
@@ -203,49 +204,15 @@ type StudentRecord struct {
 	GraduationDate string
 }
 
-type MessageParams struct {
-	Success string
-	Error   string
-}
-
-func NewMessageParams(params url.Values) MessageParams {
-	return MessageParams{
-		Success: params.Get("success"),
-		Error:   params.Get("error"),
-	}
-}
-
-type RecordFormParams struct {
-	StudentId      int
-	FirstName      string
-	LastName       string
-	Gpa            float64
-	DegreeProgram  string
-	GraduationDate string
-	FinancialAid   int64
-	Email          string
-	Phone          string
-	Id             int
-}
-
-func NewRecordFormParams(params url.Values, requireId bool) (RecordFormParams, []string) {
-	data := RecordFormParams{}
+func NewStudentRecord(params url.Values) (StudentRecord, []string) {
+	data := StudentRecord{}
 	errors := []string{}
-
-	if requireId {
-		id, err := strconv.Atoi(params.Get("id"))
-		if err != nil {
-			errors = append(errors, "Missing or invalid record id.")
-		} else {
-			data.Id = id
-		}
-	}
 
 	studentId, err := strconv.Atoi(params.Get("student_id"))
 	if err != nil || studentId == 0 {
 		errors = append(errors, "A <strong>student ID</strong> is required.")
 	} else {
-		data.StudentId = studentId
+		data.StudentId = int64(studentId)
 	}
 
 	firstName := params.Get("first_name")
@@ -305,7 +272,7 @@ func NewRecordFormParams(params url.Values, requireId bool) (RecordFormParams, [
 	return data, errors
 }
 
-func (p RecordFormParams) GetMap(withId bool) ParamMap {
+func (p StudentRecord) GetMap() ParamMap {
 	paramMap := ParamMap{
 		"student_id":      fmt.Sprint(p.StudentId),
 		"first_name":      p.FirstName,
@@ -317,8 +284,17 @@ func (p RecordFormParams) GetMap(withId bool) ParamMap {
 		"financial_aid":   fmt.Sprint(p.FinancialAid),
 		"graduation_date": p.GraduationDate,
 	}
-	if withId {
-		paramMap["id"] = fmt.Sprint(p.Id)
-	}
 	return paramMap
+}
+
+type MessageParams struct {
+	Success string
+	Error   string
+}
+
+func NewMessageParams(params url.Values) MessageParams {
+	return MessageParams{
+		Success: params.Get("success"),
+		Error:   params.Get("error"),
+	}
 }

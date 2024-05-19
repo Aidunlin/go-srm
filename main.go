@@ -41,20 +41,51 @@ func main() {
 	})
 
 	e.GET("/create", func(c echo.Context) error {
-		return render(c, http.StatusOK, templates.CreatePage(app.RecordFormParams{}, []string{}))
+		return render(c, http.StatusOK, templates.CreatePage(app.StudentRecord{}, []string{}))
 	})
 
 	e.POST("/create", func(c echo.Context) error {
 		formParams, _ := c.FormParams()
-		params, errors := app.NewRecordFormParams(formParams, false)
+		record, errors := app.NewStudentRecord(formParams)
 		if len(errors) > 0 {
-			return render(c, http.StatusOK, templates.CreatePage(params, errors))
+			return render(c, http.StatusOK, templates.CreatePage(record, errors))
 		}
-		success := db.InsertRecord(params)
+		success := db.InsertRecord(record)
 		if success {
-			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v created!", params.FirstName))
+			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v created!", record.FirstName))
 		} else {
-			return render(c, http.StatusOK, templates.CreatePage(params, []string{"Could not save that record!"}))
+			return render(c, http.StatusOK, templates.CreatePage(record, []string{"Could not save that record!"}))
+		}
+	})
+
+	e.GET("/update/:id", func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/?error=Invalid id.")
+		}
+		success, record := db.SelectRecord(id)
+		if success {
+			return render(c, http.StatusOK, templates.UpdatePage(record, []string{}))
+		} else {
+			return c.Redirect(http.StatusSeeOther, "/?error=Could not get record!")
+		}
+	})
+
+	e.POST("/update/:id", func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/?error=Invalid id.")
+		}
+		formParams, _ := c.FormParams()
+		record, errors := app.NewStudentRecord(formParams)
+		if len(errors) > 0 {
+			return render(c, http.StatusOK, templates.UpdatePage(record, errors))
+		}
+		success := db.UpdateRecord(id, record)
+		if success {
+			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v updated!", record.FirstName))
+		} else {
+			return render(c, http.StatusOK, templates.UpdatePage(record, []string{"Could not update that record!"}))
 		}
 	})
 

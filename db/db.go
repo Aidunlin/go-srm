@@ -51,7 +51,9 @@ func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
 	records := []app.StudentRecord{}
 
 	for i := range recordsResult.Values {
+		// Included to distinguish between records.
 		id, _ := recordsResult.GetIntByName(i, "id")
+
 		studentId, _ := recordsResult.GetIntByName(i, "student_id")
 		firstName, _ := recordsResult.GetStringByName(i, "first_name")
 		lastName, _ := recordsResult.GetStringByName(i, "last_name")
@@ -78,14 +80,55 @@ func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
 	return total, records
 }
 
-func InsertRecord(params app.RecordFormParams) bool {
+func SelectRecord(id int) (bool, app.StudentRecord) {
+	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
+	if connectErr != nil {
+		return false, app.StudentRecord{}
+	}
+	defer db.Close()
+
+	sql := fmt.Sprintf("SELECT * FROM %v WHERE id = ? LIMIT 1", dbTable)
+	stmt, prepareErr := db.Prepare(sql)
+	if prepareErr != nil {
+		return false, app.StudentRecord{}
+	}
+
+	result, execErr := stmt.Execute(id)
+	if execErr != nil || len(result.Values) < 1 {
+		return false, app.StudentRecord{}
+	}
+
+	studentId, _ := result.GetIntByName(0, "student_id")
+	firstName, _ := result.GetStringByName(0, "first_name")
+	lastName, _ := result.GetStringByName(0, "last_name")
+	email, _ := result.GetStringByName(0, "email")
+	phone, _ := result.GetStringByName(0, "phone")
+	degreeProgram, _ := result.GetStringByName(0, "degree_program")
+	gpa, _ := result.GetFloatByName(0, "gpa")
+	financialAid, _ := result.GetIntByName(0, "financial_aid")
+	graduationDate, _ := result.GetStringByName(0, "graduation_date")
+
+	return true, app.StudentRecord{
+		StudentId:      studentId,
+		FirstName:      firstName,
+		LastName:       lastName,
+		Email:          email,
+		Phone:          phone,
+		DegreeProgram:  degreeProgram,
+		Gpa:            gpa,
+		FinancialAid:   financialAid,
+		GraduationDate: graduationDate,
+	}
+}
+
+func InsertRecord(record app.StudentRecord) bool {
 	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
 	if connectErr != nil {
 		return false
 	}
 	defer db.Close()
 
-	paramsMap := params.GetMap(false)
+	paramsMap := record.GetMap()
 
 	names := []string{}
 	placeholders := []string{}
@@ -99,10 +142,42 @@ func InsertRecord(params app.RecordFormParams) bool {
 		i++
 	}
 
-	namesString := strings.Join(names, ",")
+	namesString := strings.Join(names, ", ")
 	placeholdersString := strings.Join(placeholders, ", ")
 
 	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)", dbTable, namesString, placeholdersString)
+	stmt, prepareErr := db.Prepare(sql)
+	if prepareErr != nil {
+		return false
+	}
+
+	_, execErr := stmt.Execute(values...)
+	return execErr == nil
+}
+
+func UpdateRecord(id int, record app.StudentRecord) bool {
+	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
+	if connectErr != nil {
+		return false
+	}
+	defer db.Close()
+
+	paramsMap := record.GetMap()
+
+	setters := []string{}
+	values := make([]interface{}, len(paramsMap)+1)
+
+	i := 0
+	for name, value := range paramsMap {
+		setters = append(setters, fmt.Sprintf("%v = ?", name))
+		values[i] = value
+		i++
+	}
+
+	values[i] = id
+	settersString := strings.Join(setters, ", ")
+
+	sql := fmt.Sprintf("UPDATE %v SET %v WHERE id = ?", dbTable, settersString)
 	stmt, prepareErr := db.Prepare(sql)
 	if prepareErr != nil {
 		return false

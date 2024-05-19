@@ -235,7 +235,7 @@ templ recordRowActions(record app.StudentRecord) {
 		<div class="dropdown">
 			<ul class="dropdown-menu">
 				<li>
-					<a class="dropdown-item" href={ templ.URL(fmt.Sprintf("update-record.php?id=%v", record.Id)) }>
+					<a class="dropdown-item" href={ templ.URL(fmt.Sprintf("/update/%v", record.Id)) }>
 						Update { record.FirstName }
 					</a>
 				</li>

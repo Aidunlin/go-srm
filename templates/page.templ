@@ -22,6 +22,24 @@ templ navLink(link, text, path string) {
 	</li>
 }
 
+templ displayErrors(errors []string) {
+	<div class="alert alert-warning" role="alert">
+		<p>
+			The following errors were detected:
+		</p>
+		<ul>
+			for _, text := range errors {
+				<li class="mb-2">
+					@templ.Raw(text)
+				</li>
+			}
+		</ul>
+		<span>
+			All of these fields are required. Please fill them in.
+		</span>
+	</div>
+}
+
 templ devFooter() {
 	<p>
 		<strong>{ app.AppName } - Version { fmt.Sprint(app.AppVersion) }</strong>

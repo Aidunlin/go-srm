@@ -832,7 +832,7 @@ func recordRowActions(record app.StudentRecord) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var41 templ.SafeURL = templ.URL(fmt.Sprintf("update-record.php?id=%v", record.Id))
+		var templ_7745c5c3_Var41 templ.SafeURL = templ.URL(fmt.Sprintf("/update/%v", record.Id))
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var41)))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
