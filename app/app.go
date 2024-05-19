@@ -159,7 +159,7 @@ func NewRecordTableParams(params url.Values) RecordTableParams {
 	}
 	page = max(page, 1)
 
-	search := params.Get("search")
+	search := params.Get("q")
 
 	return RecordTableParams{
 		Filter: filter,
@@ -179,7 +179,7 @@ func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.S
 	v.Set("order", p.Order)
 	v.Set("page", fmt.Sprint(p.Page))
 	if len(p.Search) > 0 {
-		v.Set("search", p.Search)
+		v.Set("q", p.Search)
 	}
 	for key, value := range with {
 		v.Set(key, value)

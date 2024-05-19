@@ -94,8 +94,8 @@ templ page(path, title string) {
 							@navLink("/create", "Create Record", path)
 							@navLink("/advanced-search", "Advanced Search", path)
 						</ul>
-						<form class="d-flex" action="search-records.php" method="get">
-							<input class="form-control me-2" type="search" name="search" placeholder="Search" aria-label="Search"/>
+						<form class="d-flex" action="/search" method="get">
+							<input class="form-control me-2" type="search" name="q" placeholder="Search" aria-label="Search"/>
 							<button class="btn btn-success" type="submit">
 								Search
 							</button>

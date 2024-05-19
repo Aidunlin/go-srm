@@ -40,6 +40,13 @@ func main() {
 		return render(c, http.StatusOK, templates.IndexPage(total, records, tableParams, messageParams))
 	})
 
+	e.GET("/search", func(c echo.Context) error {
+		queryParams := c.QueryParams()
+		tableParams := app.NewRecordTableParams(queryParams)
+		total, records := db.SelectRecords(tableParams)
+		return render(c, http.StatusOK, templates.SearchPage(total, records, tableParams))
+	})
+
 	e.GET("/create", func(c echo.Context) error {
 		return render(c, http.StatusOK, templates.CreatePage(app.StudentRecord{}, []string{}))
 	})

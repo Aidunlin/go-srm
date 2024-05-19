@@ -290,7 +290,7 @@ func page(path, title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul><form class=\"d-flex\" action=\"search-records.php\" method=\"get\"><input class=\"form-control me-2\" type=\"search\" name=\"search\" placeholder=\"Search\" aria-label=\"Search\"> <button class=\"btn btn-success\" type=\"submit\">Search</button></form></div></div></nav>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul><form class=\"d-flex\" action=\"/search\" method=\"get\"><input class=\"form-control me-2\" type=\"search\" name=\"q\" placeholder=\"Search\" aria-label=\"Search\"> <button class=\"btn btn-success\" type=\"submit\">Search</button></form></div></div></nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

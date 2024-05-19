@@ -14,6 +14,11 @@ const dbPassword = ""
 const dbName = "ctec"
 const dbTable = "student_v2"
 
+type PartialSearchCheck struct {
+	Column  string
+	IsExact bool
+}
+
 func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
 	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
 	if connectErr != nil {
@@ -23,7 +28,29 @@ func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
 
 	whereSql := ""
 
-	if len(params.Filter) > 0 {
+	if len(params.Search) > 0 {
+		checks := []PartialSearchCheck{
+			{Column: "student_id", IsExact: true},
+			{Column: "first_name", IsExact: false},
+			{Column: "last_name", IsExact: false},
+			{Column: "degree_program", IsExact: false},
+			{Column: "email", IsExact: true},
+			{Column: "phone", IsExact: true},
+		}
+
+		checkStrings := []string{}
+
+		for _, check := range checks {
+			if check.IsExact {
+				checkStrings = append(checkStrings, fmt.Sprintf("%v LIKE '%v'", check.Column, params.Search))
+			} else {
+				checkStrings = append(checkStrings, fmt.Sprintf("%v LIKE '%%%v%%'", check.Column, params.Search))
+			}
+		}
+
+		checksString := strings.Join(checkStrings, " OR ")
+		whereSql = fmt.Sprintf("WHERE %v", checksString)
+	} else if len(params.Filter) > 0 {
 		whereSql = fmt.Sprintf("WHERE last_name LIKE '%v%%'", params.Filter)
 	}
 
