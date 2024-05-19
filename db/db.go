@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/Aidunlin/go-srm/app"
@@ -19,41 +20,7 @@ type PartialSearchCheck struct {
 	IsExact bool
 }
 
-func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
-	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
-	if connectErr != nil {
-		return 0, nil
-	}
-	defer db.Close()
-
-	whereSql := ""
-
-	if len(params.Search) > 0 {
-		checks := []PartialSearchCheck{
-			{Column: "student_id", IsExact: true},
-			{Column: "first_name", IsExact: false},
-			{Column: "last_name", IsExact: false},
-			{Column: "degree_program", IsExact: false},
-			{Column: "email", IsExact: true},
-			{Column: "phone", IsExact: true},
-		}
-
-		checkStrings := []string{}
-
-		for _, check := range checks {
-			if check.IsExact {
-				checkStrings = append(checkStrings, fmt.Sprintf("%v LIKE '%v'", check.Column, params.Search))
-			} else {
-				checkStrings = append(checkStrings, fmt.Sprintf("%v LIKE '%%%v%%'", check.Column, params.Search))
-			}
-		}
-
-		checksString := strings.Join(checkStrings, " OR ")
-		whereSql = fmt.Sprintf("WHERE %v", checksString)
-	} else if len(params.Filter) > 0 {
-		whereSql = fmt.Sprintf("WHERE last_name LIKE '%v%%'", params.Filter)
-	}
-
+func selectRecordsWithWhere(db *client.Conn, params app.RecordTableParams, whereSql string) (int64, []app.StudentRecord) {
 	totalSql := fmt.Sprintf("SELECT COUNT(*) AS total from %v %v", dbTable, whereSql)
 	totalResult, totalExecErr := db.Execute(totalSql)
 	if totalExecErr != nil {
@@ -107,6 +74,73 @@ func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
 	return total, records
 }
 
+func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
+	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
+	if connectErr != nil {
+		return 0, nil
+	}
+	defer db.Close()
+
+	whereSql := ""
+	if len(params.Search) > 0 {
+		checks := []PartialSearchCheck{
+			{Column: "student_id", IsExact: true},
+			{Column: "first_name", IsExact: false},
+			{Column: "last_name", IsExact: false},
+			{Column: "degree_program", IsExact: false},
+			{Column: "email", IsExact: true},
+			{Column: "phone", IsExact: true},
+		}
+
+		checkStrings := []string{}
+
+		for _, check := range checks {
+			if check.IsExact {
+				checkStrings = append(checkStrings, fmt.Sprintf("%v LIKE '%v'", check.Column, params.Search))
+			} else {
+				checkStrings = append(checkStrings, fmt.Sprintf("%v LIKE '%%%v%%'", check.Column, params.Search))
+			}
+		}
+
+		checksString := strings.Join(checkStrings, " OR ")
+		whereSql = fmt.Sprintf("WHERE %v", checksString)
+	} else if len(params.Filter) > 0 {
+		whereSql = fmt.Sprintf("WHERE last_name LIKE '%v%%'", params.Filter)
+	}
+
+	return selectRecordsWithWhere(db, params, whereSql)
+}
+
+func SelectRecordsWithForm(params app.RecordTableParams, form app.StudentRecord) (int64, []app.StudentRecord) {
+	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
+	if connectErr != nil {
+		return 0, nil
+	}
+	defer db.Close()
+
+	whereSql := ""
+	searchConditions := []string{}
+	for name, value := range form.GetMap(true) {
+		if len(value) == 0 {
+			continue
+		}
+
+		_, err := strconv.ParseFloat(value, 64)
+		if err == nil {
+			println("Exact", name, value)
+			searchConditions = append(searchConditions, fmt.Sprintf("%v = %v", name, value))
+		} else {
+			println("Not exact", name, value)
+			searchConditions = append(searchConditions, fmt.Sprintf("%v LIKE '%%%v%%'", name, value))
+		}
+	}
+	if len(searchConditions) > 0 {
+		whereSql = fmt.Sprintf("WHERE %v", strings.Join(searchConditions, " AND "))
+	}
+
+	return selectRecordsWithWhere(db, params, whereSql)
+}
+
 func SelectRecord(id int) (bool, app.StudentRecord) {
 	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
 	if connectErr != nil {
@@ -155,7 +189,7 @@ func InsertRecord(record app.StudentRecord) bool {
 	}
 	defer db.Close()
 
-	paramsMap := record.GetMap()
+	paramsMap := record.GetMap(false)
 
 	names := []string{}
 	placeholders := []string{}
@@ -189,7 +223,7 @@ func UpdateRecord(id int, record app.StudentRecord) bool {
 	}
 	defer db.Close()
 
-	paramsMap := record.GetMap()
+	paramsMap := record.GetMap(false)
 
 	setters := []string{}
 	values := make([]interface{}, len(paramsMap)+1)

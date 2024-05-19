@@ -192,6 +192,12 @@ func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.S
 
 type StudentRecord struct {
 	// Only set when selecting multiple records.
+	IdRaw           string
+	StudentIdRaw    string
+	GpaRaw          string
+	FinancialAidRaw string
+
+	// Only set when selecting multiple records.
 	Id             int64
 	StudentId      int64
 	FirstName      string
@@ -208,7 +214,8 @@ func NewStudentRecord(params url.Values) (StudentRecord, []string) {
 	data := StudentRecord{}
 	errors := []string{}
 
-	studentId, err := strconv.Atoi(params.Get("student_id"))
+	data.StudentIdRaw = params.Get("student_id")
+	studentId, err := strconv.Atoi(data.StudentIdRaw)
 	if err != nil || studentId == 0 {
 		errors = append(errors, "A <strong>student ID</strong> is required.")
 	} else {
@@ -229,7 +236,8 @@ func NewStudentRecord(params url.Values) (StudentRecord, []string) {
 		data.LastName = lastName
 	}
 
-	gpa, err := strconv.ParseFloat(params.Get("gpa"), 64)
+	data.GpaRaw = params.Get("gpa")
+	gpa, err := strconv.ParseFloat(data.GpaRaw, 64)
 	if err == nil {
 		data.Gpa = gpa
 	}
@@ -248,7 +256,8 @@ func NewStudentRecord(params url.Values) (StudentRecord, []string) {
 		errors = append(errors, "Invalid <strong>graduation date</strong>.")
 	}
 
-	financialAid, err := strconv.Atoi(params.Get("financial_aid"))
+	data.FinancialAidRaw = params.Get("financial_aid")
+	financialAid, err := strconv.Atoi(data.FinancialAidRaw)
 	if err != nil || !isFinancialAid(financialAid) {
 		errors = append(errors, "An option for <strong>financial aid</strong> is required.")
 	} else {
@@ -272,19 +281,86 @@ func NewStudentRecord(params url.Values) (StudentRecord, []string) {
 	return data, errors
 }
 
-func (p StudentRecord) GetMap() ParamMap {
-	paramMap := ParamMap{
-		"student_id":      fmt.Sprint(p.StudentId),
-		"first_name":      p.FirstName,
-		"last_name":       p.LastName,
-		"email":           p.Email,
-		"phone":           p.Phone,
-		"degree_program":  p.DegreeProgram,
-		"gpa":             fmt.Sprint(p.Gpa),
-		"financial_aid":   fmt.Sprint(p.FinancialAid),
-		"graduation_date": p.GraduationDate,
+func NewAdvancedSearchForm(params url.Values) StudentRecord {
+	data := StudentRecord{}
+
+	data.StudentIdRaw = params.Get("student_id")
+	studentId, err := strconv.Atoi(data.StudentIdRaw)
+	if err == nil && studentId != 0 {
+		data.StudentId = int64(studentId)
 	}
-	return paramMap
+
+	firstName := params.Get("first_name")
+	if len(firstName) > 0 {
+		data.FirstName = firstName
+	}
+
+	lastName := params.Get("last_name")
+	if len(lastName) > 0 {
+		data.LastName = lastName
+	}
+
+	data.GpaRaw = params.Get("gpa")
+	gpa, err := strconv.ParseFloat(data.GpaRaw, 64)
+	if err == nil {
+		data.Gpa = gpa
+	}
+
+	degreeProgram := params.Get("degree_program")
+	if isDegreeProgram(degreeProgram) {
+		data.DegreeProgram = degreeProgram
+	}
+
+	graudationDate := params.Get("graduation_date")
+	if isGraduationDate(graudationDate) {
+		data.GraduationDate = graudationDate
+	}
+
+	data.FinancialAidRaw = params.Get("financial_aid")
+	financialAid, err := strconv.Atoi(data.FinancialAidRaw)
+	if err == nil || isFinancialAid(financialAid) {
+		data.FinancialAid = int64(financialAid)
+	}
+
+	email := params.Get("email")
+	if len(email) > 0 {
+		data.Email = email
+	}
+
+	phone := params.Get("phone")
+	if len(phone) > 0 {
+		data.Phone = phone
+	}
+
+	return data
+}
+
+func (p StudentRecord) GetMap(raw bool) ParamMap {
+	if raw {
+		return ParamMap{
+			"student_id":      p.StudentIdRaw,
+			"first_name":      p.FirstName,
+			"last_name":       p.LastName,
+			"email":           p.Email,
+			"phone":           p.Phone,
+			"degree_program":  p.DegreeProgram,
+			"gpa":             p.GpaRaw,
+			"financial_aid":   p.FinancialAidRaw,
+			"graduation_date": p.GraduationDate,
+		}
+	} else {
+		return ParamMap{
+			"student_id":      fmt.Sprint(p.StudentId),
+			"first_name":      p.FirstName,
+			"last_name":       p.LastName,
+			"email":           p.Email,
+			"phone":           p.Phone,
+			"degree_program":  p.DegreeProgram,
+			"gpa":             fmt.Sprint(p.Gpa),
+			"financial_aid":   fmt.Sprint(p.FinancialAid),
+			"graduation_date": p.GraduationDate,
+		}
+	}
 }
 
 type MessageParams struct {
