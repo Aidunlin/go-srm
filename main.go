@@ -11,9 +11,6 @@ import (
 	"github.com/Aidunlin/go-srm/db"
 	"github.com/Aidunlin/go-srm/templates"
 	"github.com/a-h/templ"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -41,7 +38,7 @@ func main() {
 	gob.Register(app.StudentRecord{})
 
 	e := echo.New()
-	e.Use(middleware.Logger(), session.Middleware(sessions.NewCookieStore(securecookie.GenerateRandomKey(32))))
+	e.Use(middleware.Logger())
 	e.Static("/css", "css")
 
 	e.GET("/", func(c echo.Context) error {

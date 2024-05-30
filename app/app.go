@@ -20,6 +20,67 @@ const PaginateLimit = 10
 
 type ParamMap = map[string]string
 
+type QueryBuilder struct {
+	ctx    context.Context
+	values url.Values
+}
+
+func NewQuery(ctx context.Context) QueryBuilder {
+	return QueryBuilder{
+		ctx:    ctx,
+		values: url.Values{},
+	}
+}
+
+func (q QueryBuilder) With(key, value string) QueryBuilder {
+	q.values.Set(key, value)
+	return q
+}
+
+func (q QueryBuilder) WithMap(params ParamMap) QueryBuilder {
+	for key, value := range params {
+		q.values.Set(key, value)
+	}
+	return q
+}
+
+func (q QueryBuilder) WithUrlValues(values url.Values) QueryBuilder {
+	for key, value := range values {
+		q.values.Set(key, value[0])
+	}
+	return q
+}
+
+func (q QueryBuilder) WithTableParams() QueryBuilder {
+	p := GetTableParams(q.ctx)
+	if len(p.Filter) > 0 {
+		q.values.Set("filter", p.Filter)
+	}
+	q.values.Set("sortby", p.Sortby)
+	q.values.Set("order", p.Order)
+	q.values.Set("page", fmt.Sprint(p.Page))
+	if len(p.Search) > 0 {
+		q.values.Set("q", p.Search)
+	}
+	return q
+}
+
+func (q QueryBuilder) WithAdvancedSearch() QueryBuilder {
+	p := GetFormParams(q.ctx)
+	return q.WithMap(p)
+}
+
+func (q QueryBuilder) Without(keys ...string) QueryBuilder {
+	for _, key := range keys {
+		q.values.Del(key)
+	}
+	return q
+}
+
+func (q QueryBuilder) Build() templ.SafeURL {
+	return templ.URL(fmt.Sprintf("?%v", q.values.Encode()))
+}
+
 func DisplayDate(value string) string {
 	date, err := time.Parse(time.DateOnly, value)
 	if err != nil {
@@ -169,29 +230,6 @@ func NewRecordTableParams(params url.Values) RecordTableParams {
 		Page:   page,
 		Search: search,
 	}
-}
-
-func (p RecordTableParams) QueryString(form ParamMap, with ParamMap, without ...string) templ.SafeURL {
-	v := url.Values{}
-	if len(p.Filter) > 0 {
-		v.Set("filter", p.Filter)
-	}
-	v.Set("sortby", p.Sortby)
-	v.Set("order", p.Order)
-	v.Set("page", fmt.Sprint(p.Page))
-	if len(p.Search) > 0 {
-		v.Set("q", p.Search)
-	}
-	for key, value := range form {
-		v.Set(key, value)
-	}
-	for key, value := range with {
-		v.Set(key, value)
-	}
-	for _, value := range without {
-		v.Del(value)
-	}
-	return templ.URL(fmt.Sprintf("?%v", v.Encode()))
 }
 
 func AdvancedSearchParams(input url.Values) ParamMap {
