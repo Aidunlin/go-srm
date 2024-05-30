@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/gob"
 	"fmt"
 	"net/http"
@@ -18,11 +19,17 @@ import (
 )
 
 // Renders a templ component using echo.
-func render(c echo.Context, code int, t templ.Component) error {
+func render(c echo.Context, code int, t templ.Component, params map[any]any) error {
 	buf := templ.GetBuffer()
 	defer templ.ReleaseBuffer(buf)
 
-	if err := t.Render(c.Request().Context(), buf); err != nil {
+	ctx := c.Request().Context()
+
+	for key, value := range params {
+		ctx = context.WithValue(ctx, key, value)
+	}
+
+	if err := t.Render(ctx, buf); err != nil {
 		return err
 	}
 
@@ -41,15 +48,21 @@ func main() {
 		queryParams := c.QueryParams()
 		tableParams := app.NewRecordTableParams(queryParams)
 		total, records := db.SelectRecords(tableParams)
-		messageParams := app.NewMessageParams(queryParams)
-		return render(c, http.StatusOK, templates.IndexPage(total, records, tableParams, messageParams))
+		params := map[any]any{
+			"table":   tableParams,
+			"message": app.NewMessageParams(queryParams),
+		}
+		return render(c, http.StatusOK, templates.IndexPage(total, records), params)
 	})
 
 	e.GET("/search", func(c echo.Context) error {
 		queryParams := c.QueryParams()
 		tableParams := app.NewRecordTableParams(queryParams)
 		total, records := db.SelectRecords(tableParams)
-		return render(c, http.StatusOK, templates.SearchPage(total, records, tableParams))
+		params := map[any]any{
+			"table": tableParams,
+		}
+		return render(c, http.StatusOK, templates.SearchPage(total, records), params)
 	})
 
 	e.GET("/advanced-search", func(c echo.Context) error {
@@ -62,7 +75,10 @@ func main() {
 				queryParams := c.QueryParams()
 				tableParams := app.NewRecordTableParams(queryParams)
 				total, records := db.SelectRecordsWithForm(tableParams, record)
-				return render(c, http.StatusOK, templates.AdvancedSearchPage(record, total, records, tableParams, true))
+				params := map[any]any{
+					"table": tableParams,
+				}
+				return render(c, http.StatusOK, templates.AdvancedSearchPage(record, total, records, true), params)
 			} else {
 				println("GET could not find session data")
 			}
@@ -70,7 +86,7 @@ func main() {
 			c.SetCookie(&http.Cookie{Name: "session", Path: "/", MaxAge: -1})
 			println("GET could not find session", err.Error())
 		}
-		return render(c, http.StatusOK, templates.AdvancedSearchPage(app.StudentRecord{}, 0, nil, app.RecordTableParams{}, false))
+		return render(c, http.StatusOK, templates.AdvancedSearchPage(app.StudentRecord{}, 0, nil, false), nil)
 	})
 
 	e.POST("/advanced-search", func(c echo.Context) error {
@@ -84,7 +100,7 @@ func main() {
 				saveErr := sess.Save(c.Request(), c.Response())
 				if saveErr == nil {
 					println("POST deleted session")
-					return render(c, http.StatusOK, templates.AdvancedSearchPage(app.StudentRecord{}, 0, nil, app.RecordTableParams{}, false))
+					return render(c, http.StatusOK, templates.AdvancedSearchPage(app.StudentRecord{}, 0, nil, false), nil)
 				} else {
 					println("POST could not delete session", saveErr.Error())
 				}
@@ -103,24 +119,27 @@ func main() {
 		queryParams := c.QueryParams()
 		tableParams := app.NewRecordTableParams(queryParams)
 		total, records := db.SelectRecordsWithForm(tableParams, record)
-		return render(c, http.StatusOK, templates.AdvancedSearchPage(record, total, records, tableParams, true))
+		params := map[any]any{
+			"table": tableParams,
+		}
+		return render(c, http.StatusOK, templates.AdvancedSearchPage(record, total, records, true), params)
 	})
 
 	e.GET("/create", func(c echo.Context) error {
-		return render(c, http.StatusOK, templates.CreatePage(app.StudentRecord{}, []string{}))
+		return render(c, http.StatusOK, templates.CreatePage(app.StudentRecord{}, []string{}), nil)
 	})
 
 	e.POST("/create", func(c echo.Context) error {
 		formParams, _ := c.FormParams()
 		record, errors := app.NewStudentRecord(formParams)
 		if len(errors) > 0 {
-			return render(c, http.StatusOK, templates.CreatePage(record, errors))
+			return render(c, http.StatusOK, templates.CreatePage(record, errors), nil)
 		}
 		success := db.InsertRecord(record)
 		if success {
 			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v created!", record.FirstName))
 		} else {
-			return render(c, http.StatusOK, templates.CreatePage(record, []string{"Could not save that record!"}))
+			return render(c, http.StatusOK, templates.CreatePage(record, []string{"Could not save that record!"}), nil)
 		}
 	})
 
@@ -131,7 +150,7 @@ func main() {
 		}
 		success, record := db.SelectRecord(id)
 		if success {
-			return render(c, http.StatusOK, templates.UpdatePage(record, []string{}))
+			return render(c, http.StatusOK, templates.UpdatePage(record, []string{}), nil)
 		} else {
 			return c.Redirect(http.StatusSeeOther, "/?error=Could not get record!")
 		}
@@ -145,13 +164,13 @@ func main() {
 		formParams, _ := c.FormParams()
 		record, errors := app.NewStudentRecord(formParams)
 		if len(errors) > 0 {
-			return render(c, http.StatusOK, templates.UpdatePage(record, errors))
+			return render(c, http.StatusOK, templates.UpdatePage(record, errors), nil)
 		}
 		success := db.UpdateRecord(id, record)
 		if success {
 			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v updated!", record.FirstName))
 		} else {
-			return render(c, http.StatusOK, templates.UpdatePage(record, []string{"Could not update that record!"}))
+			return render(c, http.StatusOK, templates.UpdatePage(record, []string{"Could not update that record!"}), nil)
 		}
 	})
 

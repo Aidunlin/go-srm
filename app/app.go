@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"net/url"
@@ -373,4 +374,18 @@ func NewMessageParams(params url.Values) MessageParams {
 		Success: params.Get("success"),
 		Error:   params.Get("error"),
 	}
+}
+
+func GetTableParams(ctx context.Context) RecordTableParams {
+	if params, ok := ctx.Value("table").(RecordTableParams); ok {
+		return params
+	}
+	return NewRecordTableParams(nil)
+}
+
+func GetMessageParams(ctx context.Context) MessageParams {
+	if params, ok := ctx.Value("message").(MessageParams); ok {
+		return params
+	}
+	return NewMessageParams(nil)
 }
