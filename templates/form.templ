@@ -6,15 +6,8 @@ import (
 	"github.com/Aidunlin/go-srm/app"
 )
 
-templ displayResetForm() {
-	<form method="post">
-		<input type="hidden" name="reset" value="true"/>
-		<button type="submit" class="btn btn-dark mb-2">Reset</button>
-	</form>
-}
-
-templ form(record app.StudentRecord, defaultDegreeLabel string, buttonLabel string) {
-	<form method="post">
+templ form(method string, record app.StudentRecord, defaultDegreeLabel string, buttonLabel string) {
+	<form method={ method }>
 		<div class="mb-3">
 			<label class="col-form-label" for="student_id">
 				Student ID

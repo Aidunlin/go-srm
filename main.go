@@ -66,61 +66,18 @@ func main() {
 	})
 
 	e.GET("/advanced-search", func(c echo.Context) error {
-		sess, err := session.Get("session", c)
-		if err == nil {
-			println("GET found session")
-			record, ok := sess.Values["advanced-search"].(app.StudentRecord)
-			if ok {
-				println("GET found session data")
-				queryParams := c.QueryParams()
-				tableParams := app.NewRecordTableParams(queryParams)
-				total, records := db.SelectRecordsWithForm(tableParams, record)
-				params := map[any]any{
-					"table": tableParams,
-				}
-				return render(c, http.StatusOK, templates.AdvancedSearchPage(record, total, records, true), params)
-			} else {
-				println("GET could not find session data")
-			}
-		} else {
-			c.SetCookie(&http.Cookie{Name: "session", Path: "/", MaxAge: -1})
-			println("GET could not find session", err.Error())
-		}
-		return render(c, http.StatusOK, templates.AdvancedSearchPage(app.StudentRecord{}, 0, nil, false), nil)
-	})
-
-	e.POST("/advanced-search", func(c echo.Context) error {
 		formParams, _ := c.FormParams()
-		record := app.NewAdvancedSearchForm(formParams)
-		sess, err := session.Get("session", c)
-		if err == nil {
-			println("POST found session")
-			if formParams.Has("reset") {
-				sess.Options.MaxAge = -1
-				saveErr := sess.Save(c.Request(), c.Response())
-				if saveErr == nil {
-					println("POST deleted session")
-					return render(c, http.StatusOK, templates.AdvancedSearchPage(app.StudentRecord{}, 0, nil, false), nil)
-				} else {
-					println("POST could not delete session", saveErr.Error())
-				}
-			} else {
-				sess.Values["advanced-search"] = record
-				saveErr := sess.Save(c.Request(), c.Response())
-				if saveErr == nil {
-					println("POST saved session")
-				} else {
-					println("POST could not save session", saveErr.Error())
-				}
-			}
-		} else {
-			println("POST could not find session", err.Error())
+		form := app.AdvancedSearchParams(formParams)
+		if len(form) == 0 {
+			return render(c, http.StatusOK, templates.AdvancedSearchPage(app.StudentRecord{}, 0, nil, false), nil)
 		}
+		record := app.NewAdvancedSearchForm(formParams)
 		queryParams := c.QueryParams()
 		tableParams := app.NewRecordTableParams(queryParams)
 		total, records := db.SelectRecordsWithForm(tableParams, record)
 		params := map[any]any{
 			"table": tableParams,
+			"form":  form,
 		}
 		return render(c, http.StatusOK, templates.AdvancedSearchPage(record, total, records, true), params)
 	})

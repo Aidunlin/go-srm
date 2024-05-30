@@ -44,7 +44,7 @@ templ SearchPage(totalRecords int64, records []app.StudentRecord) {
 	}
 }
 
-templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records []app.StudentRecord, showReset bool) {
+templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records []app.StudentRecord, searched bool) {
 	@layout("/advanced-search", "Advanced Search") {
 		<main class="container-xxl">
 			<div class="row my-5">
@@ -52,13 +52,10 @@ templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records [
 					<h2 class="alert alert-primary">
 						Advanced Search
 					</h2>
-					if showReset {
-						@displayResetForm()
-					}
-					@form(record, "Any", "Search")
+					@form("get", record, "Any", "Search")
 				</div>
 				<div class="col-12 col-md-9">
-					if showReset {
+					if searched {
 						@recordsCount(totalRecords)
 					} else {
 						<p class="alert alert-info" role="alert">
@@ -88,7 +85,7 @@ templ CreatePage(record app.StudentRecord, errors []string) {
 					if len(errors) > 0 {
 						@displayErrors(errors)
 					}
-					@form(record, "Undeclared", "Create")
+					@form("post", record, "Undeclared", "Create")
 				</div>
 			</div>
 		</main>
@@ -106,7 +103,7 @@ templ UpdatePage(record app.StudentRecord, errors []string) {
 					if len(errors) > 0 {
 						@displayErrors(errors)
 					}
-					@form(record, "Undeclared", "Update")
+					@form("post", record, "Undeclared", "Update")
 				</div>
 			</div>
 		</main>

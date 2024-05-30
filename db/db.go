@@ -120,7 +120,7 @@ func SelectRecordsWithForm(params app.RecordTableParams, form app.StudentRecord)
 
 	whereSql := ""
 	searchConditions := []string{}
-	for name, value := range form.GetMap(true) {
+	for name, value := range form.GetRawMap() {
 		if len(value) == 0 {
 			continue
 		}
@@ -189,7 +189,7 @@ func InsertRecord(record app.StudentRecord) bool {
 	}
 	defer db.Close()
 
-	paramsMap := record.GetMap(false)
+	paramsMap := record.GetMap()
 
 	names := []string{}
 	placeholders := []string{}
@@ -223,7 +223,7 @@ func UpdateRecord(id int, record app.StudentRecord) bool {
 	}
 	defer db.Close()
 
-	paramsMap := record.GetMap(false)
+	paramsMap := record.GetMap()
 
 	setters := []string{}
 	values := make([]interface{}, len(paramsMap)+1)

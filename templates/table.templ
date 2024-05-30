@@ -14,7 +14,7 @@ templ recordsFilterAll() {
 		} else {
 			class="btn me-2 btn-light border"
 		}
-		href={ app.GetTableParams(ctx).QueryString(nil, "filter", "page") }
+		href={ app.GetTableParams(ctx).QueryString(nil, nil, "filter", "page") }
 	>
 		All
 	</a>
@@ -28,7 +28,7 @@ templ recordsFilterLetter(letter string) {
 		} else {
 			class="btn text-uppercase btn-light border"
 		}
-		href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"filter": letter}, "page") }
+		href={ app.GetTableParams(ctx).QueryString(nil, app.ParamMap{"filter": letter}, "page") }
 		title={ fmt.Sprintf("Letter %v", letter) }
 	>
 		{ letter }
@@ -84,13 +84,13 @@ templ recordsSortMenuItem(column app.StudentRecordColumn) {
 			if column.Name == app.GetTableParams(ctx).Sortby {
 				class="dropdown-item text-bg-dark"
 				if app.GetTableParams(ctx).Order == "asc" {
-					href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"order": "desc"}) }
+					href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{ "order": "desc"}) }
 				} else {
-					href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"order": "asc"}) }
+					href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{ "order": "asc"}) }
 				}
 			} else {
 				class="dropdown-item text-bg-white"
-				href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"sortby": column.Name, "order": "asc"}) }
+				href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{ "sortby": column.Name, "order": "asc"}) }
 			}
 			title={ fmt.Sprintf("Sort by %v", column.Title) }
 		>
@@ -107,7 +107,7 @@ templ recordsSortOrder(order, label string) {
 		} else {
 			class="btn btn-light border"
 		}
-		href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"order": order}, "page") }
+		href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{"order": order}, "page") }
 		title={ fmt.Sprintf("%v Order", label) }
 	>
 		{ label }
@@ -156,7 +156,7 @@ templ recordsPagination(pages int) {
 			} else {
 				<a
 					class="btn me-2 btn-light border"
-					href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"page": fmt.Sprint(app.GetTableParams(ctx).Page - 1)}) }
+					href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{"page": fmt.Sprint(app.GetTableParams(ctx).Page - 1)}) }
 					title="Previous page"
 				>
 					Previous
@@ -171,7 +171,7 @@ templ recordsPagination(pages int) {
 						} else {
 							class="btn btn-light border"
 						}
-						href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"page": fmt.Sprint(i)}) }
+						href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{"page": fmt.Sprint(i)}) }
 						title={ fmt.Sprintf("Page %v", i) }
 					>
 						{ fmt.Sprint(i) }
@@ -185,7 +185,7 @@ templ recordsPagination(pages int) {
 			} else {
 				<a
 					class="btn me-2 btn-light border"
-					href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"page": fmt.Sprint(app.GetTableParams(ctx).Page + 1)}) }
+					href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{"page": fmt.Sprint(app.GetTableParams(ctx).Page + 1)}) }
 					title="Next page"
 				>
 					Next
@@ -202,13 +202,13 @@ templ recordsHeaderColumn(column app.StudentRecordColumn) {
 				class="btn px-2 w-100 fw-bold btn-dark"
 				aria-current="true"
 				if app.GetTableParams(ctx).Order == "asc" {
-					href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"order": "desc"}, "page") }
+					href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{"order": "desc"}, "page") }
 				} else {
-					href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"order": "asc"}, "page") }
+					href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{"order": "asc"}, "page") }
 				}
 			} else {
 				class="btn px-2 w-100 fw-bold btn-light text-black border"
-				href={ app.GetTableParams(ctx).QueryString(app.ParamMap{"sortby": column.Name, "order": "asc"}, "page") }
+				href={ app.GetTableParams(ctx).QueryString(app.GetFormParams(ctx), app.ParamMap{"sortby": column.Name, "order": "asc"}, "page") }
 			}
 			title={ fmt.Sprintf("Sort by %v", column.Title) }
 		>

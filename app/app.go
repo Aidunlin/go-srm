@@ -171,7 +171,7 @@ func NewRecordTableParams(params url.Values) RecordTableParams {
 	}
 }
 
-func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.SafeURL {
+func (p RecordTableParams) QueryString(form ParamMap, with ParamMap, without ...string) templ.SafeURL {
 	v := url.Values{}
 	if len(p.Filter) > 0 {
 		v.Set("filter", p.Filter)
@@ -182,6 +182,9 @@ func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.S
 	if len(p.Search) > 0 {
 		v.Set("q", p.Search)
 	}
+	for key, value := range form {
+		v.Set(key, value)
+	}
 	for key, value := range with {
 		v.Set(key, value)
 	}
@@ -189,6 +192,18 @@ func (p RecordTableParams) QueryString(with ParamMap, without ...string) templ.S
 		v.Del(value)
 	}
 	return templ.URL(fmt.Sprintf("?%v", v.Encode()))
+}
+
+func AdvancedSearchParams(input url.Values) ParamMap {
+	output := ParamMap{}
+
+	for _, column := range GetColumns() {
+		if input.Has(column.Name) && len(input.Get(column.Name)) > 0 {
+			output[column.Name] = input.Get(column.Name)
+		}
+	}
+
+	return output
 }
 
 type StudentRecord struct {
@@ -336,31 +351,31 @@ func NewAdvancedSearchForm(params url.Values) StudentRecord {
 	return data
 }
 
-func (p StudentRecord) GetMap(raw bool) ParamMap {
-	if raw {
-		return ParamMap{
-			"student_id":      p.StudentIdRaw,
-			"first_name":      p.FirstName,
-			"last_name":       p.LastName,
-			"email":           p.Email,
-			"phone":           p.Phone,
-			"degree_program":  p.DegreeProgram,
-			"gpa":             p.GpaRaw,
-			"financial_aid":   p.FinancialAidRaw,
-			"graduation_date": p.GraduationDate,
-		}
-	} else {
-		return ParamMap{
-			"student_id":      fmt.Sprint(p.StudentId),
-			"first_name":      p.FirstName,
-			"last_name":       p.LastName,
-			"email":           p.Email,
-			"phone":           p.Phone,
-			"degree_program":  p.DegreeProgram,
-			"gpa":             fmt.Sprint(p.Gpa),
-			"financial_aid":   fmt.Sprint(p.FinancialAid),
-			"graduation_date": p.GraduationDate,
-		}
+func (p StudentRecord) GetRawMap() ParamMap {
+	return ParamMap{
+		"student_id":      p.StudentIdRaw,
+		"first_name":      p.FirstName,
+		"last_name":       p.LastName,
+		"email":           p.Email,
+		"phone":           p.Phone,
+		"degree_program":  p.DegreeProgram,
+		"gpa":             p.GpaRaw,
+		"financial_aid":   p.FinancialAidRaw,
+		"graduation_date": p.GraduationDate,
+	}
+}
+
+func (p StudentRecord) GetMap() ParamMap {
+	return ParamMap{
+		"student_id":      fmt.Sprint(p.StudentId),
+		"first_name":      p.FirstName,
+		"last_name":       p.LastName,
+		"email":           p.Email,
+		"phone":           p.Phone,
+		"degree_program":  p.DegreeProgram,
+		"gpa":             fmt.Sprint(p.Gpa),
+		"financial_aid":   fmt.Sprint(p.FinancialAid),
+		"graduation_date": p.GraduationDate,
 	}
 }
 
@@ -388,4 +403,11 @@ func GetMessageParams(ctx context.Context) MessageParams {
 		return params
 	}
 	return NewMessageParams(nil)
+}
+
+func GetFormParams(ctx context.Context) ParamMap {
+	if params, ok := ctx.Value("form").(ParamMap); ok {
+		return params
+	}
+	return nil
 }
