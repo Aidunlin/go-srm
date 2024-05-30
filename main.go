@@ -36,7 +36,6 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger(), session.Middleware(sessions.NewCookieStore(securecookie.GenerateRandomKey(32))))
 	e.Static("/css", "css")
-	e.Static("/js", "js")
 
 	e.GET("/", func(c echo.Context) error {
 		queryParams := c.QueryParams()
