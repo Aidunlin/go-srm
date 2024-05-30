@@ -1,120 +1,114 @@
 package templates
 
 import (
-	"fmt"
-
 	"github.com/Aidunlin/go-srm/app"
 )
 
-templ navLink(link, text, path string) {
-	<li class="nav-item">
-		<a
-			if (link == path) {
-				class="nav-link active"
-				aria-current="page"
+templ IndexPage(totalRecords int64, records []app.StudentRecord, tableParams app.RecordTableParams, messageParams app.MessageParams) {
+	@layout("/", "Record Management") {
+		<main class="container-xxl my-5">
+			<h2 class="alert alert-primary">
+				Record Management
+			</h2>
+			@recordsFilterControls(tableParams)
+			@recordsCount(totalRecords)
+			@recordsMessages(messageParams)
+			if (len(records) > 0) {
+				@recordsSortControls(tableParams)
+				@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
+				@recordsTable(records, tableParams)
+				@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
+			}
+		</main>
+	}
+}
+
+templ SearchPage(totalRecords int64, records []app.StudentRecord, tableParams app.RecordTableParams) {
+	@layout("/search", "Search Records") {
+		<main class="container-xxl my-5">
+			<h2 class="alert alert-primary">
+				Search Records
+			</h2>
+			if len(tableParams.Search) == 0 {
+                <p class="alert alert-warning">Empty query, please try again</p>
 			} else {
-				class="nav-link"
+				@recordsCount(totalRecords)
+				if len(records) > 0 {
+					@recordsSortControls(tableParams)
+					@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
+					@recordsTable(records, tableParams)
+					@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
+				}
 			}
-			href={ templ.URL(link) }
-		>
-			{ text }
-		</a>
-	</li>
+		</main>
+	}
 }
 
-templ displayErrors(errors []string) {
-	<div class="alert alert-warning" role="alert">
-		<p>
-			The following errors were detected:
-		</p>
-		<ul>
-			for _, text := range errors {
-				<li class="mb-2">
-					@templ.Raw(text)
-				</li>
-			}
-		</ul>
-		<span>
-			All of these fields are required. Please fill them in.
-		</span>
-	</div>
-}
-
-templ devFooter() {
-	<p>
-		<strong>{ app.AppName } - Version { fmt.Sprint(app.AppVersion) }</strong>
-		<br/>
-		@templ.Raw(app.AppCopyright)
-	</p>
-	<p>Mode: { app.AppStatus }</p>
-}
-
-templ prodFooter() {
-	<div class="row justify-content-center">
-		<div class="col-12 col-md-6">
-			<blockquote>
-				&ldquo;Quote&rdquo;
-				<br/>
-				&mdash;Author
-			</blockquote>
-			@devFooter()
-		</div>
-		<div class="col-12 col-md-6 text-md-end">
-			<img src="" alt="" class="img-fluid rounded"/>
-		</div>
-	</div>
-}
-
-templ page(path, title string) {
-	<!DOCTYPE html>
-	<html lang="en">
-		<head>
-			<meta charset="UTF-8"/>
-			<link rel="stylesheet" href="/css/bootstrap.min.css"/>
-			<link rel="stylesheet" href="/css/style.css"/>
-			<title>
-				{ title }
-			</title>
-		</head>
-		<body class="d-flex flex-column min-vh-100">
-			<h1 class="d-none">
-				{ title }
-			</h1>
-			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-				<div class="container-xxl">
-					<a class="navbar-brand" href="/">
-						{ app.AppName }
-					</a>
-					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-						<span class="navbar-toggler-icon"></span>
-					</button>
-					<div class="collapse navbar-collapse" id="navbarSupportedContent">
-						<ul class="navbar-nav me-auto mb-2 mb-lg-0">
-							@navLink("/", "Home", path)
-							@navLink("/create", "Create Record", path)
-							@navLink("/advanced-search", "Advanced Search", path)
-						</ul>
-						<form class="d-flex" action="/search" method="get">
-							<input class="form-control me-2" type="search" name="q" placeholder="Search" aria-label="Search"/>
-							<button class="btn btn-success" type="submit">
-								Search
-							</button>
-						</form>
-					</div>
+templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records []app.StudentRecord, tableParams app.RecordTableParams, showReset bool) {
+	@layout("/advanced-search", "Advanced Search") {
+		<main class="container-xxl">
+			<div class="row my-5">
+				<div class="col-12 col-md-3">
+					<h2 class="alert alert-primary">
+						Advanced Search
+					</h2>
+					if showReset {
+						@displayResetForm()
+					}
+					@form(record, "Any", "Search")
 				</div>
-			</nav>
-			{ children... }
-			<footer class="bg-body-secondary mt-auto py-3">
-				<div class="container-xxl">
-					if app.AppStatus == "Production" {
-						@prodFooter()
+				<div class="col-12 col-md-9">
+					if showReset {
+						@recordsCount(totalRecords)
 					} else {
-						@devFooter()
+						<p class="alert alert-info" role="alert">
+							Search results will appear here.
+						</p>
+					}
+					if len(records) > 0 {
+						@recordsSortControls(tableParams)
+						@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
+						@recordsTable(records, tableParams)
+						@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
 					}
 				</div>
-			</footer>
-			<script src="/js/popper.min.js"></script>
-			<script src="/js/bootstrap.min.js"></script>
-		</body>
-	</html>
+			</div>
+		</main>
+	}
+}
+
+templ CreatePage(record app.StudentRecord, errors []string) {
+	@layout("/create", "Create Record") {
+		<main class="container">
+			<div class="row justify-content-center my-5">
+				<div class="col-12 col-lg-6">
+					<h2 class="alert alert-primary">
+						Create Record
+					</h2>
+					if len(errors) > 0 {
+						@displayErrors(errors)
+					}
+					@form(record, "Undeclared", "Create")
+				</div>
+			</div>
+		</main>
+	}
+}
+
+templ UpdatePage(record app.StudentRecord, errors []string) {
+	@layout("/update", "Update Record") {
+		<main class="container">
+			<div class="row justify-content-center my-5">
+				<div class="col-12 col-lg-6">
+					<h2 class="alert alert-primary">
+						Update Record
+					</h2>
+					if len(errors) > 0 {
+						@displayErrors(errors)
+					}
+					@form(record, "Undeclared", "Update")
+				</div>
+			</div>
+		</main>
+	}
 }

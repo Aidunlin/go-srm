@@ -327,22 +327,3 @@ templ recordsTable(records []app.StudentRecord, params app.RecordTableParams) {
 		</table>
 	</div>
 }
-
-templ IndexPage(totalRecords int64, records []app.StudentRecord, tableParams app.RecordTableParams, messageParams app.MessageParams) {
-	@page("/", "Record Management") {
-		<main class="container-xxl my-5">
-			<h2 class="alert alert-primary">
-				Record Management
-			</h2>
-			@recordsFilterControls(tableParams)
-			@recordsCount(totalRecords)
-			@recordsMessages(messageParams)
-			if (len(records) > 0) {
-				@recordsSortControls(tableParams)
-				@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
-				@recordsTable(records, tableParams)
-				@recordsPagination(tableParams, app.GetTotalPages(totalRecords))
-			}
-		</main>
-	}
-}
