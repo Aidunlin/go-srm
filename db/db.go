@@ -2,174 +2,39 @@ package db
 
 import (
 	"fmt"
-	"strconv"
+	"math"
 	"strings"
 
 	"github.com/Aidunlin/go-srm/app"
 	"github.com/go-mysql-org/go-mysql/client"
+	"github.com/go-mysql-org/go-mysql/mysql"
 )
 
-const dbAddr = "localhost:3306"
-const dbUser = "root"
-const dbPassword = ""
-const dbName = "ctec"
-const dbTable = "student_v2"
+const address = "localhost:3306"
+const user = "root"
+const password = ""
+const databaseName = "srm"
+const tableName = "student"
+const paginateLimit = 10
 
-type PartialSearchCheck struct {
-	Column  string
-	IsExact bool
+func GetTotalPages(totalResults int64) int {
+	return int(math.Ceil(float64(totalResults) / float64(paginateLimit)))
 }
 
-func selectRecordsWithWhere(db *client.Conn, params app.RecordTableParams, whereSql string) (int64, []app.StudentRecord) {
-	totalSql := fmt.Sprintf("SELECT COUNT(*) AS total from %v %v", dbTable, whereSql)
-	totalResult, totalExecErr := db.Execute(totalSql)
-	if totalExecErr != nil {
-		return 0, nil
-	}
-	total, totalResultErr := totalResult.GetIntByName(0, "total")
-	if totalResultErr != nil {
-		return 0, nil
-	}
+func getRecordFromResult(row int, result *mysql.Result) app.StudentRecord {
+	id, _ := result.GetIntByName(row, "id")
+	studentId, _ := result.GetIntByName(row, "student_id")
+	firstName, _ := result.GetStringByName(row, "first_name")
+	lastName, _ := result.GetStringByName(row, "last_name")
+	email, _ := result.GetStringByName(row, "email")
+	phone, _ := result.GetStringByName(row, "phone")
+	degreeProgram, _ := result.GetStringByName(row, "degree_program")
+	gpa, _ := result.GetFloatByName(row, "gpa")
+	financialAid, _ := result.GetIntByName(row, "financial_aid")
+	graduationDate, _ := result.GetStringByName(row, "graduation_date")
 
-	orderSql := fmt.Sprintf("ORDER BY %v %v", params.Sortby, params.Order)
-
-	offset := (params.Page - 1) * app.PaginateLimit
-	pageSql := fmt.Sprintf("LIMIT %v OFFSET %v", app.PaginateLimit, offset)
-
-	recordsSql := fmt.Sprintf("SELECT * FROM %v %v %v %v", dbTable, whereSql, orderSql, pageSql)
-	recordsResult, recordsExecErr := db.Execute(recordsSql)
-	if recordsExecErr != nil {
-		return 0, nil
-	}
-
-	records := []app.StudentRecord{}
-
-	for i := range recordsResult.Values {
-		// Included to distinguish between records.
-		id, _ := recordsResult.GetIntByName(i, "id")
-
-		studentId, _ := recordsResult.GetIntByName(i, "student_id")
-		firstName, _ := recordsResult.GetStringByName(i, "first_name")
-		lastName, _ := recordsResult.GetStringByName(i, "last_name")
-		email, _ := recordsResult.GetStringByName(i, "email")
-		phone, _ := recordsResult.GetStringByName(i, "phone")
-		degreeProgram, _ := recordsResult.GetStringByName(i, "degree_program")
-		gpa, _ := recordsResult.GetFloatByName(i, "gpa")
-		financialAid, _ := recordsResult.GetIntByName(i, "financial_aid")
-		graduationDate, _ := recordsResult.GetStringByName(i, "graduation_date")
-
-		records = append(records, app.StudentRecord{
-			Id:             id,
-			StudentId:      studentId,
-			FirstName:      firstName,
-			LastName:       lastName,
-			Email:          email,
-			Phone:          phone,
-			DegreeProgram:  degreeProgram,
-			Gpa:            gpa,
-			FinancialAid:   financialAid,
-			GraduationDate: graduationDate,
-		})
-	}
-	return total, records
-}
-
-func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
-	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
-	if connectErr != nil {
-		return 0, nil
-	}
-	defer db.Close()
-
-	whereSql := ""
-	if len(params.Search) > 0 {
-		checks := []PartialSearchCheck{
-			{Column: "student_id", IsExact: true},
-			{Column: "first_name", IsExact: false},
-			{Column: "last_name", IsExact: false},
-			{Column: "degree_program", IsExact: false},
-			{Column: "email", IsExact: true},
-			{Column: "phone", IsExact: true},
-		}
-
-		checkStrings := []string{}
-
-		for _, check := range checks {
-			if check.IsExact {
-				checkStrings = append(checkStrings, fmt.Sprintf("%v LIKE '%v'", check.Column, params.Search))
-			} else {
-				checkStrings = append(checkStrings, fmt.Sprintf("%v LIKE '%%%v%%'", check.Column, params.Search))
-			}
-		}
-
-		checksString := strings.Join(checkStrings, " OR ")
-		whereSql = fmt.Sprintf("WHERE %v", checksString)
-	} else if len(params.Filter) > 0 {
-		whereSql = fmt.Sprintf("WHERE last_name LIKE '%v%%'", params.Filter)
-	}
-
-	return selectRecordsWithWhere(db, params, whereSql)
-}
-
-func SelectRecordsWithForm(params app.RecordTableParams, form app.StudentRecord) (int64, []app.StudentRecord) {
-	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
-	if connectErr != nil {
-		return 0, nil
-	}
-	defer db.Close()
-
-	whereSql := ""
-	searchConditions := []string{}
-	for name, value := range form.GetRawMap() {
-		if len(value) == 0 {
-			continue
-		}
-
-		_, err := strconv.ParseFloat(value, 64)
-		if err == nil {
-			println("Exact", name, value)
-			searchConditions = append(searchConditions, fmt.Sprintf("%v = %v", name, value))
-		} else {
-			println("Not exact", name, value)
-			searchConditions = append(searchConditions, fmt.Sprintf("%v LIKE '%%%v%%'", name, value))
-		}
-	}
-	if len(searchConditions) > 0 {
-		whereSql = fmt.Sprintf("WHERE %v", strings.Join(searchConditions, " AND "))
-	}
-
-	return selectRecordsWithWhere(db, params, whereSql)
-}
-
-func SelectRecord(id int) (bool, app.StudentRecord) {
-	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
-	if connectErr != nil {
-		return false, app.StudentRecord{}
-	}
-	defer db.Close()
-
-	sql := fmt.Sprintf("SELECT * FROM %v WHERE id = ? LIMIT 1", dbTable)
-	stmt, prepareErr := db.Prepare(sql)
-	if prepareErr != nil {
-		return false, app.StudentRecord{}
-	}
-
-	result, execErr := stmt.Execute(id)
-	if execErr != nil || len(result.Values) < 1 {
-		return false, app.StudentRecord{}
-	}
-
-	studentId, _ := result.GetIntByName(0, "student_id")
-	firstName, _ := result.GetStringByName(0, "first_name")
-	lastName, _ := result.GetStringByName(0, "last_name")
-	email, _ := result.GetStringByName(0, "email")
-	phone, _ := result.GetStringByName(0, "phone")
-	degreeProgram, _ := result.GetStringByName(0, "degree_program")
-	gpa, _ := result.GetFloatByName(0, "gpa")
-	financialAid, _ := result.GetIntByName(0, "financial_aid")
-	graduationDate, _ := result.GetStringByName(0, "graduation_date")
-
-	return true, app.StudentRecord{
+	return app.StudentRecord{
+		Id:             id,
 		StudentId:      studentId,
 		FirstName:      firstName,
 		LastName:       lastName,
@@ -182,8 +47,133 @@ func SelectRecord(id int) (bool, app.StudentRecord) {
 	}
 }
 
+func whereLastNameFilter(filter string) string {
+	if len(filter) != 1 {
+		return ""
+	}
+	return fmt.Sprintf("WHERE last_name LIKE '%v%%'", filter)
+}
+
+func whereBasicSearch(search string) string {
+	var conditions []string
+	for _, column := range app.GetColumns() {
+		if !column.BasicSearch {
+			continue
+		}
+
+		if column.BasicSearchExact {
+			conditions = append(conditions, fmt.Sprintf("%v LIKE '%v'", column.Name, search))
+		} else {
+			conditions = append(conditions, fmt.Sprintf("%v LIKE '%%%v%%'", column.Name, search))
+		}
+	}
+
+	var sql string
+	if len(conditions) > 0 {
+		sql = fmt.Sprintf("WHERE %v", strings.Join(conditions, " OR "))
+	}
+	return sql
+}
+
+func whereAdvancedSearch(form app.StudentRecord) string {
+	var conditions []string
+	for name, value := range form.GetRawMap() {
+		if len(value) == 0 {
+			continue
+		}
+
+		column := app.GetColumn(name)
+		if len(column.Name) == 0 {
+			continue
+		}
+
+		if column.AdvancedSearchExact {
+			conditions = append(conditions, fmt.Sprintf("%v = %v", name, value))
+		} else {
+			conditions = append(conditions, fmt.Sprintf("%v LIKE '%%%v%%'", name, value))
+		}
+	}
+
+	var sql string
+	if len(conditions) > 0 {
+		sql = fmt.Sprintf("WHERE %v", strings.Join(conditions, " AND "))
+	}
+	return sql
+}
+
+func selectRecordsWithWhere(db *client.Conn, params app.RecordTableParams, whereSql string) (int64, []app.StudentRecord) {
+	totalSql := fmt.Sprintf("SELECT COUNT(*) AS total from %v %v", tableName, whereSql)
+	totalResult, totalExecErr := db.Execute(totalSql)
+	if totalExecErr != nil {
+		return 0, nil
+	}
+	total, totalResultErr := totalResult.GetIntByName(0, "total")
+	if totalResultErr != nil {
+		return 0, nil
+	}
+
+	orderSql := fmt.Sprintf("ORDER BY %v %v", params.Sortby, params.Order)
+
+	offset := (params.Page - 1) * paginateLimit
+	pageSql := fmt.Sprintf("LIMIT %v OFFSET %v", paginateLimit, offset)
+
+	recordsSql := fmt.Sprintf("SELECT * FROM %v %v %v %v", tableName, whereSql, orderSql, pageSql)
+	recordsResult, recordsExecErr := db.Execute(recordsSql)
+	if recordsExecErr != nil {
+		return 0, nil
+	}
+
+	records := []app.StudentRecord{}
+
+	for i := range recordsResult.Values {
+		records = append(records, getRecordFromResult(i, recordsResult))
+	}
+	return total, records
+}
+
+func SelectRecords(params app.RecordTableParams) (int64, []app.StudentRecord) {
+	db, connectErr := client.Connect(address, user, password, databaseName)
+	if connectErr != nil {
+		return 0, nil
+	}
+	defer db.Close()
+
+	var whereSql string
+	if len(params.Filter) > 0 {
+		whereSql = whereLastNameFilter(params.Filter)
+	} else if len(params.Search) > 0 {
+		whereSql = whereBasicSearch(params.Search)
+	}
+	return selectRecordsWithWhere(db, params, whereSql)
+}
+
+func SelectRecordsWithForm(params app.RecordTableParams, form app.StudentRecord) (int64, []app.StudentRecord) {
+	db, connectErr := client.Connect(address, user, password, databaseName)
+	if connectErr != nil {
+		return 0, nil
+	}
+	defer db.Close()
+	return selectRecordsWithWhere(db, params, whereAdvancedSearch(form))
+}
+
+func SelectRecord(id int) (bool, app.StudentRecord) {
+	db, connectErr := client.Connect(address, user, password, databaseName)
+	if connectErr != nil {
+		return false, app.StudentRecord{}
+	}
+	defer db.Close()
+
+	sql := fmt.Sprintf("SELECT * FROM %v WHERE id = ? LIMIT 1", tableName)
+	result, execErr := db.Execute(sql, id)
+	if execErr != nil || len(result.Values) < 1 {
+		return false, app.StudentRecord{}
+	}
+
+	return true, getRecordFromResult(0, result)
+}
+
 func InsertRecord(record app.StudentRecord) bool {
-	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
+	db, connectErr := client.Connect(address, user, password, databaseName)
 	if connectErr != nil {
 		return false
 	}
@@ -206,18 +196,13 @@ func InsertRecord(record app.StudentRecord) bool {
 	namesString := strings.Join(names, ", ")
 	placeholdersString := strings.Join(placeholders, ", ")
 
-	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)", dbTable, namesString, placeholdersString)
-	stmt, prepareErr := db.Prepare(sql)
-	if prepareErr != nil {
-		return false
-	}
-
-	_, execErr := stmt.Execute(values...)
+	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v)", tableName, namesString, placeholdersString)
+	_, execErr := db.Execute(sql, values...)
 	return execErr == nil
 }
 
 func UpdateRecord(id int, record app.StudentRecord) bool {
-	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
+	db, connectErr := client.Connect(address, user, password, databaseName)
 	if connectErr != nil {
 		return false
 	}
@@ -238,29 +223,19 @@ func UpdateRecord(id int, record app.StudentRecord) bool {
 	values[i] = id
 	settersString := strings.Join(setters, ", ")
 
-	sql := fmt.Sprintf("UPDATE %v SET %v WHERE id = ?", dbTable, settersString)
-	stmt, prepareErr := db.Prepare(sql)
-	if prepareErr != nil {
-		return false
-	}
-
-	_, execErr := stmt.Execute(values...)
+	sql := fmt.Sprintf("UPDATE %v SET %v WHERE id = ?", tableName, settersString)
+	_, execErr := db.Execute(sql, values...)
 	return execErr == nil
 }
 
 func DeleteRecord(id int) bool {
-	db, connectErr := client.Connect(dbAddr, dbUser, dbPassword, dbName)
+	db, connectErr := client.Connect(address, user, password, databaseName)
 	if connectErr != nil {
 		return false
 	}
 	defer db.Close()
 
-	sql := fmt.Sprintf("DELETE FROM %v WHERE id = ?", dbTable)
-	stmt, prepareErr := db.Prepare(sql)
-	if prepareErr != nil {
-		return false
-	}
-
-	result, execErr := stmt.Execute(id)
+	sql := fmt.Sprintf("DELETE FROM %v WHERE id = ?", tableName)
+	result, execErr := db.Execute(sql, id)
 	return execErr == nil && result.AffectedRows == 1
 }

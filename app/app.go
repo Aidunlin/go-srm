@@ -3,83 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
-	"math"
 	"net/url"
 	"slices"
 	"strconv"
 	"time"
-
-	"github.com/a-h/templ"
 )
-
-const AppCopyright = "&copy; 2024 Aidan Linerud"
-const AppVersion = 3.0
-const AppName = "CTEC 127 Record Manager"
-const AppStatus = "Development"
-const PaginateLimit = 10
-
-type ParamMap = map[string]string
-
-type QueryBuilder struct {
-	ctx    context.Context
-	values url.Values
-}
-
-func NewQuery(ctx context.Context) QueryBuilder {
-	return QueryBuilder{
-		ctx:    ctx,
-		values: url.Values{},
-	}
-}
-
-func (q QueryBuilder) With(key, value string) QueryBuilder {
-	q.values.Set(key, value)
-	return q
-}
-
-func (q QueryBuilder) WithMap(params ParamMap) QueryBuilder {
-	for key, value := range params {
-		q.values.Set(key, value)
-	}
-	return q
-}
-
-func (q QueryBuilder) WithUrlValues(values url.Values) QueryBuilder {
-	for key, value := range values {
-		q.values.Set(key, value[0])
-	}
-	return q
-}
-
-func (q QueryBuilder) WithTableParams() QueryBuilder {
-	p := GetTableParams(q.ctx)
-	if len(p.Filter) > 0 {
-		q.values.Set("filter", p.Filter)
-	}
-	q.values.Set("sortby", p.Sortby)
-	q.values.Set("order", p.Order)
-	q.values.Set("page", fmt.Sprint(p.Page))
-	if len(p.Search) > 0 {
-		q.values.Set("q", p.Search)
-	}
-	return q
-}
-
-func (q QueryBuilder) WithAdvancedSearch() QueryBuilder {
-	p := GetFormParams(q.ctx)
-	return q.WithMap(p)
-}
-
-func (q QueryBuilder) Without(keys ...string) QueryBuilder {
-	for _, key := range keys {
-		q.values.Del(key)
-	}
-	return q
-}
-
-func (q QueryBuilder) Build() templ.SafeURL {
-	return templ.URL(fmt.Sprintf("?%v", q.values.Encode()))
-}
 
 func DisplayDate(value string) string {
 	date, err := time.Parse(time.DateOnly, value)
@@ -89,37 +17,80 @@ func DisplayDate(value string) string {
 	return fmt.Sprintf("%02d/%02d/%04d", date.Month(), date.Day(), date.Year())
 }
 
-func GetTotalPages(totalResults int64) int {
-	return int(math.Ceil(float64(totalResults) / float64(PaginateLimit)))
+type StudentRecordColumn struct {
+	Name                string
+	Label               string
+	title               string
+	BasicSearch         bool
+	BasicSearchExact    bool
+	AdvancedSearchExact bool
 }
 
-type StudentRecordColumn struct {
-	Name  string
-	Label string
-	Title string
+func (c StudentRecordColumn) Title() string {
+	if len(c.title) > 0 {
+		return c.title
+	}
+	return c.Label
 }
 
 func GetColumns() []StudentRecordColumn {
 	return []StudentRecordColumn{
-		{Name: "student_id", Label: "SID", Title: "Student Id"},
-		{Name: "first_name", Label: "First Name", Title: "First Name"},
-		{Name: "last_name", Label: "Last Name", Title: "Last Name"},
-		{Name: "gpa", Label: "GPA", Title: "GPA"},
-		{Name: "degree_program", Label: "Degree Program", Title: "Degree Program"},
-		{Name: "graduation_date", Label: "Graduation", Title: "Graduation Date"},
-		{Name: "financial_aid", Label: "Aid", Title: "Financial Aid"},
-		{Name: "email", Label: "Email", Title: "Email"},
-		{Name: "phone", Label: "Phone", Title: "Phone"},
+		{
+			Name:                "student_id",
+			Label:               "SID",
+			title:               "Student ID",
+			BasicSearch:         true,
+			BasicSearchExact:    true,
+			AdvancedSearchExact: true,
+		}, {
+			Name:        "first_name",
+			Label:       "First Name",
+			BasicSearch: true,
+		}, {
+			Name:        "last_name",
+			Label:       "Last Name",
+			BasicSearch: true,
+		}, {
+			Name:                "gpa",
+			Label:               "GPA",
+			AdvancedSearchExact: true,
+		}, {
+			Name:        "degree_program",
+			Label:       "Degree Program",
+			BasicSearch: true,
+		}, {
+			Name:                "graduation_date",
+			Label:               "Graduation",
+			title:               "Graduation Date",
+			AdvancedSearchExact: true,
+		}, {
+			Name:                "financial_aid",
+			Label:               "Aid",
+			title:               "Financial Aid",
+			AdvancedSearchExact: true,
+		}, {
+			Name:                "email",
+			Label:               "Email",
+			BasicSearch:         true,
+			BasicSearchExact:    true,
+			AdvancedSearchExact: true,
+		}, {
+			Name:                "phone",
+			Label:               "Phone",
+			BasicSearch:         true,
+			BasicSearchExact:    true,
+			AdvancedSearchExact: true,
+		},
 	}
 }
 
-func GetColumnLabel(name string) string {
+func GetColumn(name string) StudentRecordColumn {
 	for _, column := range GetColumns() {
 		if column.Name == name {
-			return column.Label
+			return column
 		}
 	}
-	return ""
+	return StudentRecordColumn{}
 }
 
 func GetDegrees() []string {
@@ -232,8 +203,8 @@ func NewRecordTableParams(params url.Values) RecordTableParams {
 	}
 }
 
-func AdvancedSearchParams(input url.Values) ParamMap {
-	output := ParamMap{}
+func AdvancedSearchParams(input url.Values) map[string]string {
+	output := map[string]string{}
 
 	for _, column := range GetColumns() {
 		if input.Has(column.Name) && len(input.Get(column.Name)) > 0 {
@@ -245,13 +216,11 @@ func AdvancedSearchParams(input url.Values) ParamMap {
 }
 
 type StudentRecord struct {
-	// Only set when selecting multiple records.
 	IdRaw           string
 	StudentIdRaw    string
 	GpaRaw          string
 	FinancialAidRaw string
 
-	// Only set when selecting multiple records.
 	Id             int64
 	StudentId      int64
 	FirstName      string
@@ -389,8 +358,8 @@ func NewAdvancedSearchForm(params url.Values) StudentRecord {
 	return data
 }
 
-func (p StudentRecord) GetRawMap() ParamMap {
-	return ParamMap{
+func (p StudentRecord) GetRawMap() map[string]string {
+	return map[string]string{
 		"student_id":      p.StudentIdRaw,
 		"first_name":      p.FirstName,
 		"last_name":       p.LastName,
@@ -403,8 +372,8 @@ func (p StudentRecord) GetRawMap() ParamMap {
 	}
 }
 
-func (p StudentRecord) GetMap() ParamMap {
-	return ParamMap{
+func (p StudentRecord) GetMap() map[string]string {
+	return map[string]string{
 		"student_id":      fmt.Sprint(p.StudentId),
 		"first_name":      p.FirstName,
 		"last_name":       p.LastName,
@@ -443,8 +412,8 @@ func GetMessageParams(ctx context.Context) MessageParams {
 	return NewMessageParams(nil)
 }
 
-func GetFormParams(ctx context.Context) ParamMap {
-	if params, ok := ctx.Value("form").(ParamMap); ok {
+func GetFormParams(ctx context.Context) map[string]string {
+	if params, ok := ctx.Value("form").(map[string]string); ok {
 		return params
 	}
 	return nil

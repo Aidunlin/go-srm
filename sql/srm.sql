@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 19, 2024 at 11:10 PM
+-- Generation Time: Jun 01, 2024 at 02:59 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,18 +18,18 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `ctec`
+-- Database: `srm`
 --
-CREATE DATABASE IF NOT EXISTS `ctec` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `ctec`;
+CREATE DATABASE IF NOT EXISTS `srm` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `srm`;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `student_v2`
+-- Table structure for table `student`
 --
 
-CREATE TABLE `student_v2` (
+CREATE TABLE `student` (
   `id` mediumint(8) UNSIGNED NOT NULL,
   `student_id` mediumint(9) NOT NULL,
   `first_name` varchar(255) NOT NULL,
@@ -44,10 +44,10 @@ CREATE TABLE `student_v2` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
--- Dumping data for table `student_v2`
+-- Dumping data for table `student`
 --
 
-INSERT INTO `student_v2` (`id`, `student_id`, `first_name`, `last_name`, `email`, `phone`, `degree_program`, `gpa`, `financial_aid`, `graduation_date`, `date_created`) VALUES
+INSERT INTO `student` (`id`, `student_id`, `first_name`, `last_name`, `email`, `phone`, `degree_program`, `gpa`, `financial_aid`, `graduation_date`, `date_created`) VALUES
 (103, 1, 'Vittorio', 'Cornels', 'vcornels0@joomla.org', '883-429-8988', 'Cybersecurity', 0.51, 1, '2021-02-04', '2024-03-07 01:01:07'),
 (104, 2, 'Dianna', 'Devennie', 'ddevennie1@ucoz.ru', '186-892-5962', 'Marketing', 0.46, 1, '2024-10-14', '2024-03-07 01:01:07'),
 (105, 3, 'Amy', 'Stagg', 'astagg2@wp.com', '408-838-4973', 'Business Administration', NULL, 1, '2029-07-05', '2024-03-07 01:01:07'),
@@ -152,9 +152,9 @@ INSERT INTO `student_v2` (`id`, `student_id`, `first_name`, `last_name`, `email`
 --
 
 --
--- Indexes for table `student_v2`
+-- Indexes for table `student`
 --
-ALTER TABLE `student_v2`
+ALTER TABLE `student`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `student_id` (`student_id`);
 
@@ -163,9 +163,9 @@ ALTER TABLE `student_v2`
 --
 
 --
--- AUTO_INCREMENT for table `student_v2`
+-- AUTO_INCREMENT for table `student`
 --
-ALTER TABLE `student_v2`
+ALTER TABLE `student`
   MODIFY `id` mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=229;
 COMMIT;
 

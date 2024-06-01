@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/gob"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -35,8 +34,6 @@ func render(c echo.Context, code int, t templ.Component, params map[any]any) err
 
 // Entry point for the web server.
 func main() {
-	gob.Register(app.StudentRecord{})
-
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Static("/css", "css")
@@ -90,11 +87,10 @@ func main() {
 			return render(c, http.StatusOK, templates.CreatePage(record, errors), nil)
 		}
 		success := db.InsertRecord(record)
-		if success {
-			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v created!", record.FirstName))
-		} else {
+		if !success {
 			return render(c, http.StatusOK, templates.CreatePage(record, []string{"Could not save that record!"}), nil)
 		}
+		return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v created!", record.FirstName))
 	})
 
 	e.GET("/update/:id", func(c echo.Context) error {
@@ -103,11 +99,10 @@ func main() {
 			return c.Redirect(http.StatusSeeOther, "/?error=Invalid id.")
 		}
 		success, record := db.SelectRecord(id)
-		if success {
-			return render(c, http.StatusOK, templates.UpdatePage(record, []string{}), nil)
-		} else {
+		if !success {
 			return c.Redirect(http.StatusSeeOther, "/?error=Could not get record!")
 		}
+		return render(c, http.StatusOK, templates.UpdatePage(record, []string{}), nil)
 	})
 
 	e.POST("/update/:id", func(c echo.Context) error {
@@ -121,11 +116,11 @@ func main() {
 			return render(c, http.StatusOK, templates.UpdatePage(record, errors), nil)
 		}
 		success := db.UpdateRecord(id, record)
-		if success {
-			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v updated!", record.FirstName))
-		} else {
+		if !success {
 			return render(c, http.StatusOK, templates.UpdatePage(record, []string{"Could not update that record!"}), nil)
 		}
+		return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/?success=%v updated!", record.FirstName))
+
 	})
 
 	e.GET("/delete/:id", func(c echo.Context) error {
@@ -134,11 +129,10 @@ func main() {
 			return c.Redirect(http.StatusSeeOther, "/?error=Invalid id.")
 		}
 		success := db.DeleteRecord(id)
-		if success {
-			return c.Redirect(http.StatusSeeOther, "/?success=Deleted record.")
-		} else {
+		if !success {
 			return c.Redirect(http.StatusSeeOther, "/?error=Could not delete record!")
 		}
+		return c.Redirect(http.StatusSeeOther, "/?success=Deleted record.")
 	})
 
 	e.Logger.Fatal((e.Start(":3000")))

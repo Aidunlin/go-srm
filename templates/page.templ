@@ -2,6 +2,7 @@ package templates
 
 import (
 	"github.com/Aidunlin/go-srm/app"
+	"github.com/Aidunlin/go-srm/db"
 )
 
 templ IndexPage(totalRecords int64, records []app.StudentRecord) {
@@ -15,9 +16,9 @@ templ IndexPage(totalRecords int64, records []app.StudentRecord) {
 			@recordsMessages()
 			if (len(records) > 0) {
 				@recordsSortControls()
-				@recordsPagination(app.GetTotalPages(totalRecords))
+				@recordsPagination(db.GetTotalPages(totalRecords))
 				@recordsTable(records)
-				@recordsPagination(app.GetTotalPages(totalRecords))
+				@recordsPagination(db.GetTotalPages(totalRecords))
 			}
 		</main>
 	}
@@ -35,9 +36,9 @@ templ SearchPage(totalRecords int64, records []app.StudentRecord) {
 				@recordsCount(totalRecords)
 				if len(records) > 0 {
 					@recordsSortControls()
-					@recordsPagination(app.GetTotalPages(totalRecords))
+					@recordsPagination(db.GetTotalPages(totalRecords))
 					@recordsTable(records)
-					@recordsPagination(app.GetTotalPages(totalRecords))
+					@recordsPagination(db.GetTotalPages(totalRecords))
 				}
 			}
 		</main>
@@ -64,9 +65,9 @@ templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records [
 					}
 					if len(records) > 0 {
 						@recordsSortControls()
-						@recordsPagination(app.GetTotalPages(totalRecords))
+						@recordsPagination(db.GetTotalPages(totalRecords))
 						@recordsTable(records)
-						@recordsPagination(app.GetTotalPages(totalRecords))
+						@recordsPagination(db.GetTotalPages(totalRecords))
 					}
 				</div>
 			</div>

@@ -2,8 +2,10 @@ package templates
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Aidunlin/go-srm/app"
+	"github.com/Aidunlin/go-srm/query"
 )
 
 templ recordsFilterAll() {
@@ -14,7 +16,7 @@ templ recordsFilterAll() {
 		} else {
 			class="btn me-2 btn-light border"
 		}
-		href={ app.NewQuery(ctx).WithTableParams().Without("filter", "page").Build() }
+		href={ query.New(ctx).WithTableParams().Without("filter", "page").Build() }
 	>
 		All
 	</a>
@@ -28,8 +30,8 @@ templ recordsFilterLetter(letter string) {
 		} else {
 			class="btn text-uppercase btn-light border"
 		}
-		href={ app.NewQuery(ctx).WithTableParams().With("filter", letter).Without("page").Build() }
-		title={ fmt.Sprintf("Letter %v", letter) }
+		href={ query.New(ctx).WithTableParams().With("filter", letter).Without("page").Build() }
+		title={ fmt.Sprintf("Letter %v", strings.ToUpper(letter)) }
 	>
 		{ letter }
 	</a>
@@ -84,17 +86,17 @@ templ recordsSortMenuItem(column app.StudentRecordColumn) {
 			if column.Name == app.GetTableParams(ctx).Sortby {
 				class="dropdown-item text-bg-dark"
 				if app.GetTableParams(ctx).Order == "asc" {
-					href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("order", "desc").Build() }
+					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "desc").Build() }
 				} else {
-					href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("order", "asc").Build() }
+					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "asc").Build() }
 				}
 			} else {
 				class="dropdown-item text-bg-white"
-				href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("sortby", column.Name).With("order", "asc").Build() }
+				href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("sortby", column.Name).With("order", "asc").Build() }
 			}
-			title={ fmt.Sprintf("Sort by %v", column.Title) }
+			title={ fmt.Sprintf("Sort by %v", column.Title()) }
 		>
-			{ column.Title }
+			{ column.Title() }
 		</a>
 	</li>
 }
@@ -107,7 +109,7 @@ templ recordsSortOrder(order, label string) {
 		} else {
 			class="btn btn-light border"
 		}
-		href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("order", order).Without("page").Build() }
+		href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", order).Without("page").Build() }
 		title={ fmt.Sprintf("%v Order", label) }
 	>
 		{ label }
@@ -127,7 +129,7 @@ templ recordsSortControls() {
 				type="button"
 				data-bs-toggle="dropdown"
 			>
-				{ app.GetColumnLabel(app.GetTableParams(ctx).Sortby) }
+				{ app.GetColumn(app.GetTableParams(ctx).Sortby).Label }
 			</button>
 			<ul class="dropdown-menu">
 				for _, column := range app.GetColumns() {
@@ -156,7 +158,7 @@ templ recordsPagination(pages int) {
 			} else {
 				<a
 					class="btn me-2 btn-light border"
-					href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(app.GetTableParams(ctx).Page - 1)).Build() }
+					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(app.GetTableParams(ctx).Page-1)).Build() }
 					title="Previous page"
 				>
 					Previous
@@ -171,7 +173,7 @@ templ recordsPagination(pages int) {
 						} else {
 							class="btn btn-light border"
 						}
-						href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(i)).Build() }
+						href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(i)).Build() }
 						title={ fmt.Sprintf("Page %v", i) }
 					>
 						{ fmt.Sprint(i) }
@@ -185,7 +187,7 @@ templ recordsPagination(pages int) {
 			} else {
 				<a
 					class="btn me-2 btn-light border"
-					href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(app.GetTableParams(ctx).Page + 1)).Build() }
+					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(app.GetTableParams(ctx).Page+1)).Build() }
 					title="Next page"
 				>
 					Next
@@ -202,15 +204,15 @@ templ recordsHeaderColumn(column app.StudentRecordColumn) {
 				class="btn px-2 w-100 fw-bold btn-dark"
 				aria-current="true"
 				if app.GetTableParams(ctx).Order == "asc" {
-					href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("order", "desc").Without("page").Build() }
+					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "desc").Without("page").Build() }
 				} else {
-					href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("order", "asc").Without("page").Build() }
+					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "asc").Without("page").Build() }
 				}
 			} else {
 				class="btn px-2 w-100 fw-bold btn-light text-black border"
-				href={ app.NewQuery(ctx).WithTableParams().WithAdvancedSearch().With("sortby", column.Name).With("order", "asc").Without("page").Build() }
+				href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("sortby", column.Name).With("order", "asc").Without("page").Build() }
 			}
-			title={ fmt.Sprintf("Sort by %v", column.Title) }
+			title={ fmt.Sprintf("Sort by %v", column.Title()) }
 		>
 			{ column.Label }
 		</a>
@@ -294,7 +296,13 @@ templ recordRow(record app.StudentRecord) {
 			}
 		</td>
 		<td class="text-center">
-			{ app.DisplayDate(record.GraduationDate) }
+			if len(record.GraduationDate) > 0 {
+				{ app.DisplayDate(record.GraduationDate) }
+			} else {
+				<em>
+					Unset
+				</em>
+			}
 		</td>
 		<td class="text-center">
 			if record.FinancialAid != 0 {

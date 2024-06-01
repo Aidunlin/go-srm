@@ -1,11 +1,5 @@
 package templates
 
-import (
-	"fmt"
-
-	"github.com/Aidunlin/go-srm/app"
-)
-
 templ navLink(link, text, path string) {
 	<li class="nav-item">
 		<a
@@ -59,7 +53,7 @@ templ layout(path, title string) {
 			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 				<div class="container-xxl">
 					<a class="navbar-brand" href="/">
-						{ app.AppName }
+						CTEC 127 Record Manager
 					</a>
 					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 						<span class="navbar-toggler-icon"></span>
@@ -84,12 +78,12 @@ templ layout(path, title string) {
 				<div class="container-xxl">
 					<p>
 						<strong>
-							{ app.AppName } - Version { fmt.Sprint(app.AppVersion) }
+							CTEC 127 Record Manager - Version 3.0
 						</strong>
 						<br/>
-						@templ.Raw(app.AppCopyright)
+						&copy; 2024 Aidan Linerud
 					</p>
-					<p>Mode: { app.AppStatus }</p>
+					<p>Mode: Development</p>
 				</div>
 			</footer>
 		</body>
