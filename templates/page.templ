@@ -24,6 +24,42 @@ templ IndexPage(totalRecords int64, records []app.StudentRecord) {
 	}
 }
 
+templ RegisterPage(admin app.AdminRecord, errors []string) {
+	@layout("/register", "Register") {
+		<main class="container">
+			<div class="row justify-content-center my-5">
+				<div class="col-12 col-lg-6">
+					<h2 class="alert alert-primary">
+						Register
+					</h2>
+					if len(errors) > 0 {
+						@displayErrors(errors)
+					}
+					@registerForm(admin)
+				</div>
+			</div>
+		</main>
+	}
+}
+
+templ LoginPage(admin app.AdminRecord, errors []string) {
+	@layout("/login", "Log In") {
+		<main class="container">
+			<div class="row justify-content-center my-5">
+				<div class="col-12 col-lg-6">
+					<h2 class="alert alert-primary">
+						Log In
+					</h2>
+					if len(errors) > 0 {
+						@displayErrors(errors)
+					}
+					@loginForm(admin)
+				</div>
+			</div>
+		</main>
+	}
+}
+
 templ SearchPage(totalRecords int64, records []app.StudentRecord) {
 	@layout("/search", "Search Records") {
 		<main class="container-xxl my-5">
@@ -53,7 +89,7 @@ templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records [
 					<h2 class="alert alert-primary">
 						Advanced Search
 					</h2>
-					@form("get", record, "Any", "Search")
+					@studentForm("get", record, "Any", "Search")
 				</div>
 				<div class="col-12 col-md-9">
 					if searched {
@@ -86,7 +122,7 @@ templ CreatePage(record app.StudentRecord, errors []string) {
 					if len(errors) > 0 {
 						@displayErrors(errors)
 					}
-					@form("post", record, "Undeclared", "Create")
+					@studentForm("post", record, "Undeclared", "Create")
 				</div>
 			</div>
 		</main>
@@ -104,7 +140,7 @@ templ UpdatePage(record app.StudentRecord, errors []string) {
 					if len(errors) > 0 {
 						@displayErrors(errors)
 					}
-					@form("post", record, "Undeclared", "Update")
+					@studentForm("post", record, "Undeclared", "Update")
 				</div>
 			</div>
 		</main>

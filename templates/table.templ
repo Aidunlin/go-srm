@@ -129,10 +129,10 @@ templ recordsSortControls() {
 				type="button"
 				data-bs-toggle="dropdown"
 			>
-				{ app.GetColumn(app.GetTableParams(ctx).Sortby).Label }
+				{ app.GetStudentColumn(app.GetTableParams(ctx).Sortby).Label }
 			</button>
 			<ul class="dropdown-menu">
-				for _, column := range app.GetColumns() {
+				for _, column := range app.GetStudentColumns() {
 					@recordsSortMenuItem(column)
 				}
 			</ul>
@@ -259,7 +259,7 @@ templ recordRow(record app.StudentRecord) {
 	<tr>
 		@recordRowActions(record)
 		<td class="text-end">
-			{ fmt.Sprint(record.StudentId) }
+			{ fmt.Sprint(record.Id) }
 		</td>
 		<td>
 			<strong>
@@ -324,7 +324,7 @@ templ recordsTable(records []app.StudentRecord) {
 			<thead>
 				<tr>
 					<td></td>
-					for _, column := range app.GetColumns() {
+					for _, column := range app.GetStudentColumns() {
 						@recordsHeaderColumn(column)
 					}
 				</tr>

@@ -6,22 +6,70 @@ import (
 	"github.com/Aidunlin/go-srm/app"
 )
 
-templ form(method string, record app.StudentRecord, defaultDegreeLabel string, buttonLabel string) {
-	<form method={ method }>
+templ registerForm(admin app.AdminRecord) {
+	<form method="post">
 		<div class="mb-3">
-			<label class="col-form-label" for="student_id">
-				Student ID
+			<label class="col-form-label" for="first_name">
+				First Name
 			</label>
-			<input
-				class="form-control"
-				type="number"
-				id="student_id"
-				name="student_id"
-				if record.StudentId > 0 {
-					value={ fmt.Sprint(record.StudentId) }
-				}
-			/>
+			<input class="form-control" type="text" id="first_name" name="first_name" value={ admin.FirstName }/>
 		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="last_name">
+				Last Name
+			</label>
+			<input class="form-control" type="text" id="last_name" name="last_name" value={ admin.LastName }/>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="email">
+				Email
+			</label>
+			<input class="form-control" type="text" id="email" name="email" value={ admin.Email }/>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="password">
+				Password
+			</label>
+			<input class="form-control" type="password" name="password" id="password"/>
+		</div>
+		<div class="mt-4 mb-3">
+			<a class="btn btn-light border me-2" href="/">
+				Cancel
+			</a>
+			<button class="btn btn-dark" type="submit">
+				Register
+			</button>
+		</div>
+	</form>
+}
+
+templ loginForm(admin app.AdminRecord) {
+	<form method="post">
+		<div class="mb-3">
+			<label class="col-form-label" for="email">
+				Email
+			</label>
+			<input class="form-control" type="text" id="email" name="email" value={ admin.Email }/>
+		</div>
+		<div class="mb-3">
+			<label class="col-form-label" for="password">
+				Password
+			</label>
+			<input class="form-control" type="password" name="password" id="password"/>
+		</div>
+		<div class="mt-4 mb-3">
+			<a class="btn btn-light border me-2" href="/">
+				Cancel
+			</a>
+			<button class="btn btn-dark" type="submit">
+				Log In
+			</button>
+		</div>
+	</form>
+}
+
+templ studentForm(method string, record app.StudentRecord, defaultDegreeLabel string, buttonLabel string) {
+	<form method={ method }>
 		<div class="mb-3">
 			<label class="col-form-label" for="first_name">
 				First Name

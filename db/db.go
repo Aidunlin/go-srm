@@ -23,7 +23,6 @@ func GetTotalPages(totalResults int64) int {
 
 func getRecordFromResult(row int, result *mysql.Result) app.StudentRecord {
 	id, _ := result.GetIntByName(row, "id")
-	studentId, _ := result.GetIntByName(row, "student_id")
 	firstName, _ := result.GetStringByName(row, "first_name")
 	lastName, _ := result.GetStringByName(row, "last_name")
 	email, _ := result.GetStringByName(row, "email")
@@ -35,7 +34,6 @@ func getRecordFromResult(row int, result *mysql.Result) app.StudentRecord {
 
 	return app.StudentRecord{
 		Id:             id,
-		StudentId:      studentId,
 		FirstName:      firstName,
 		LastName:       lastName,
 		Email:          email,
@@ -56,7 +54,7 @@ func whereLastNameFilter(filter string) string {
 
 func whereBasicSearch(search string) string {
 	var conditions []string
-	for _, column := range app.GetColumns() {
+	for _, column := range app.GetStudentColumns() {
 		if !column.BasicSearch {
 			continue
 		}
@@ -82,7 +80,7 @@ func whereAdvancedSearch(form app.StudentRecord) string {
 			continue
 		}
 
-		column := app.GetColumn(name)
+		column := app.GetStudentColumn(name)
 		if len(column.Name) == 0 {
 			continue
 		}
