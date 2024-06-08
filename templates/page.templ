@@ -1,30 +1,30 @@
 package templates
 
 import (
-	"github.com/Aidunlin/go-srm/app"
 	"github.com/Aidunlin/go-srm/db"
+	"github.com/Aidunlin/go-srm/model"
 )
 
-templ IndexPage(totalRecords int64, records []app.StudentRecord) {
-	@layout("/", "Record Management") {
+templ IndexPage(totalStudents int64, students []model.StudentRecord) {
+	@layout("/", "All Students") {
 		<main class="container-xxl my-5">
 			<h2 class="alert alert-primary">
-				Record Management
+				All Students
 			</h2>
-			@recordsFilterControls()
-			@recordsCount(totalRecords)
-			@recordsMessages()
-			if (len(records) > 0) {
-				@recordsSortControls()
-				@recordsPagination(db.GetTotalPages(totalRecords))
-				@recordsTable(records)
-				@recordsPagination(db.GetTotalPages(totalRecords))
+			@studentsFilterControls()
+			@studentsCount(totalStudents)
+			@studentsMessages()
+			if (len(students) > 0) {
+				@studentsSortControls()
+				@studentsPagination(db.GetTotalPages(totalStudents))
+				@studentsTable(students)
+				@studentsPagination(db.GetTotalPages(totalStudents))
 			}
 		</main>
 	}
 }
 
-templ RegisterPage(admin app.AdminRecord, errors []string) {
+templ RegisterPage(admin model.AdminRecord, errors []string) {
 	@layout("/register", "Register") {
 		<main class="container">
 			<div class="row justify-content-center my-5">
@@ -42,7 +42,7 @@ templ RegisterPage(admin app.AdminRecord, errors []string) {
 	}
 }
 
-templ LoginPage(admin app.AdminRecord, errors []string) {
+templ LoginPage(admin model.AdminRecord, errors []string) {
 	@layout("/login", "Log In") {
 		<main class="container">
 			<div class="row justify-content-center my-5">
@@ -60,28 +60,28 @@ templ LoginPage(admin app.AdminRecord, errors []string) {
 	}
 }
 
-templ SearchPage(totalRecords int64, records []app.StudentRecord) {
-	@layout("/search", "Search Records") {
+templ SearchPage(totalStudents int64, students []model.StudentRecord) {
+	@layout("/search", "Search Students") {
 		<main class="container-xxl my-5">
 			<h2 class="alert alert-primary">
-				Search Records
+				Search Students
 			</h2>
-			if len(app.GetTableParams(ctx).Search) == 0 {
+			if len(model.GetStudentTableParams(ctx).Search) == 0 {
                 <p class="alert alert-warning">Empty query, please try again</p>
 			} else {
-				@recordsCount(totalRecords)
-				if len(records) > 0 {
-					@recordsSortControls()
-					@recordsPagination(db.GetTotalPages(totalRecords))
-					@recordsTable(records)
-					@recordsPagination(db.GetTotalPages(totalRecords))
+				@studentsCount(totalStudents)
+				if len(students) > 0 {
+					@studentsSortControls()
+					@studentsPagination(db.GetTotalPages(totalStudents))
+					@studentsTable(students)
+					@studentsPagination(db.GetTotalPages(totalStudents))
 				}
 			}
 		</main>
 	}
 }
 
-templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records []app.StudentRecord, searched bool) {
+templ AdvancedSearchPage(form model.AdvancedSearchForm, totalStudents int64, students []model.StudentRecord, searched bool) {
 	@layout("/advanced-search", "Advanced Search") {
 		<main class="container-xxl">
 			<div class="row my-5">
@@ -89,21 +89,21 @@ templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records [
 					<h2 class="alert alert-primary">
 						Advanced Search
 					</h2>
-					@studentForm("get", record, "Any", "Search")
+					@advancedSearchForm(form, "Any", "Search")
 				</div>
 				<div class="col-12 col-md-9">
 					if searched {
-						@recordsCount(totalRecords)
+						@studentsCount(totalStudents)
 					} else {
 						<p class="alert alert-info" role="alert">
 							Search results will appear here.
 						</p>
 					}
-					if len(records) > 0 {
-						@recordsSortControls()
-						@recordsPagination(db.GetTotalPages(totalRecords))
-						@recordsTable(records)
-						@recordsPagination(db.GetTotalPages(totalRecords))
+					if len(students) > 0 {
+						@studentsSortControls()
+						@studentsPagination(db.GetTotalPages(totalStudents))
+						@studentsTable(students)
+						@studentsPagination(db.GetTotalPages(totalStudents))
 					}
 				</div>
 			</div>
@@ -111,36 +111,36 @@ templ AdvancedSearchPage(record app.StudentRecord, totalRecords int64, records [
 	}
 }
 
-templ CreatePage(record app.StudentRecord, errors []string) {
-	@layout("/create", "Create Record") {
+templ CreatePage(student model.StudentRecord, errors []string) {
+	@layout("/create", "Create Student") {
 		<main class="container">
 			<div class="row justify-content-center my-5">
 				<div class="col-12 col-lg-6">
 					<h2 class="alert alert-primary">
-						Create Record
+						Create Student
 					</h2>
 					if len(errors) > 0 {
 						@displayErrors(errors)
 					}
-					@studentForm("post", record, "Undeclared", "Create")
+					@studentForm(student, "Undeclared", "Create")
 				</div>
 			</div>
 		</main>
 	}
 }
 
-templ UpdatePage(record app.StudentRecord, errors []string) {
-	@layout("/update", "Update Record") {
+templ UpdatePage(student model.StudentRecord, errors []string) {
+	@layout("/update", "Update Student") {
 		<main class="container">
 			<div class="row justify-content-center my-5">
 				<div class="col-12 col-lg-6">
 					<h2 class="alert alert-primary">
-						Update Record
+						Update Student
 					</h2>
 					if len(errors) > 0 {
 						@displayErrors(errors)
 					}
-					@studentForm("post", record, "Undeclared", "Update")
+					@studentForm(student, "Undeclared", "Update")
 				</div>
 			</div>
 		</main>

@@ -1,6 +1,6 @@
-package app
+package model
 
-type StudentRecordColumn struct {
+type StudentColumn struct {
 	Name                string
 	Label               string
 	title               string
@@ -9,15 +9,15 @@ type StudentRecordColumn struct {
 	AdvancedSearchExact bool
 }
 
-func (c StudentRecordColumn) Title() string {
+func (c StudentColumn) Title() string {
 	if len(c.title) > 0 {
 		return c.title
 	}
 	return c.Label
 }
 
-func GetStudentColumns() []StudentRecordColumn {
-	return []StudentRecordColumn{
+func GetStudentColumns() []StudentColumn {
+	return []StudentColumn{
 		{
 			Name:                "id",
 			Label:               "ID",
@@ -66,11 +66,11 @@ func GetStudentColumns() []StudentRecordColumn {
 	}
 }
 
-func GetStudentColumn(name string) StudentRecordColumn {
+func GetStudentColumn(name string) StudentColumn {
 	for _, column := range GetStudentColumns() {
 		if column.Name == name {
 			return column
 		}
 	}
-	return StudentRecordColumn{}
+	return StudentColumn{}
 }

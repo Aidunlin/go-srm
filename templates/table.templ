@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Aidunlin/go-srm/app"
 	"github.com/Aidunlin/go-srm/query"
+	"github.com/Aidunlin/go-srm/model"
+	"github.com/Aidunlin/go-srm/value"
+	"time"
 )
 
-templ recordsFilterAll() {
+templ studentsFilterAll() {
 	<a
-		if len(app.GetTableParams(ctx).Filter) == 0 {
+		if len(model.GetStudentTableParams(ctx).Filter) == 0 {
 			class="btn me-2 btn-dark fw-bold"
 			aria-current="true"
 		} else {
@@ -22,9 +24,9 @@ templ recordsFilterAll() {
 	</a>
 }
 
-templ recordsFilterLetter(letter string) {
+templ studentsFilterLetter(letter string) {
 	<a
-		if app.GetTableParams(ctx).Filter == letter {
+		if model.GetStudentTableParams(ctx).Filter == letter {
 			class="btn text-uppercase btn-dark fw-bold"
 			aria-current="true"
 		} else {
@@ -37,55 +39,55 @@ templ recordsFilterLetter(letter string) {
 	</a>
 }
 
-templ recordsFilterControls() {
+templ studentsFilterControls() {
 	<div class="mb-3">
 		<span class="d-block">
 			Filter by <strong>Last Name</strong>
 		</span>
-		@recordsFilterAll()
+		@studentsFilterAll()
 		for letter := 'a'; letter <= 'z'; letter++ {
-			@recordsFilterLetter(string(letter))
+			@studentsFilterLetter(string(letter))
 		}
 	</div>
 }
 
-templ recordsCount(totalRecords int64) {
-	if totalRecords == 0 {
+templ studentsCount(totalStudents int64) {
+	if totalStudents == 0 {
 		<p class="alert alert-warning" role="alert">
-			No records found.
+			No students found.
 		</p>
 	} else {
 		<p class="alert alert-info" role="alert">
-			{ fmt.Sprint(totalRecords) }
-			if totalRecords == 1 {
-				record
+			{ fmt.Sprint(totalStudents) }
+			if totalStudents == 1 {
+				student
 			} else {
-				records
+				students
 			}
 			found.
 		</p>
 	}
 }
 
-templ recordsMessages() {
-	if len(app.GetMessageParams(ctx).Success) > 0 {
+templ studentsMessages() {
+	if len(model.GetMessageParams(ctx).Success) > 0 {
 		<p class="alert alert-success" role="alert">
-			{ app.GetMessageParams(ctx).Success }
+			{ model.GetMessageParams(ctx).Success }
 		</p>
 	}
-	if len(app.GetMessageParams(ctx).Error) > 0 {
+	if len(model.GetMessageParams(ctx).Error) > 0 {
 		<p class="alert alert-warning" role="alert">
-			Error: { app.GetMessageParams(ctx).Error }
+			Error: { model.GetMessageParams(ctx).Error }
 		</p>
 	}
 }
 
-templ recordsSortMenuItem(column app.StudentRecordColumn) {
+templ studentsSortMenuItem(column model.StudentColumn) {
 	<li>
 		<a
-			if column.Name == app.GetTableParams(ctx).Sortby {
+			if column.Name == model.GetStudentTableParams(ctx).Sortby {
 				class="dropdown-item text-bg-dark"
-				if app.GetTableParams(ctx).Order == "asc" {
+				if model.GetStudentTableParams(ctx).Order == "asc" {
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "desc").Build() }
 				} else {
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "asc").Build() }
@@ -101,9 +103,9 @@ templ recordsSortMenuItem(column app.StudentRecordColumn) {
 	</li>
 }
 
-templ recordsSortOrder(order, label string) {
+templ studentsSortOrder(order, label string) {
 	<a
-		if app.GetTableParams(ctx).Order == order {
+		if model.GetStudentTableParams(ctx).Order == order {
 			class="btn btn-dark border"
 			aria-current="true"
 		} else {
@@ -116,7 +118,7 @@ templ recordsSortOrder(order, label string) {
 	</a>
 }
 
-templ recordsSortControls() {
+templ studentsSortControls() {
 	<div class="mb-3">
 		<span class="d-block">
 			Sort by <strong>Column</strong>
@@ -129,36 +131,36 @@ templ recordsSortControls() {
 				type="button"
 				data-bs-toggle="dropdown"
 			>
-				{ app.GetStudentColumn(app.GetTableParams(ctx).Sortby).Label }
+				{ model.GetStudentColumn(model.GetStudentTableParams(ctx).Sortby).Label }
 			</button>
 			<ul class="dropdown-menu">
-				for _, column := range app.GetStudentColumns() {
-					@recordsSortMenuItem(column)
+				for _, column := range model.GetStudentColumns() {
+					@studentsSortMenuItem(column)
 				}
 			</ul>
 		</div>
 		<div class="btn-group">
-			@recordsSortOrder("asc", "Ascending")
-			@recordsSortOrder("desc", "Descending")
+			@studentsSortOrder("asc", "Ascending")
+			@studentsSortOrder("desc", "Descending")
 		</div>
 	</div>
 }
 
-templ recordsPagination(pages int) {
+templ studentsPagination(pages int) {
 	if pages > 1 {
 		<div class="mb-3">
 			<span class="d-block">
-				Page <strong>{ fmt.Sprint(app.GetTableParams(ctx).Page) }</strong>
+				Page <strong>{ fmt.Sprint(model.GetStudentTableParams(ctx).Page) }</strong>
 				of <strong>{ fmt.Sprint(pages) }</strong>
 			</span>
-			if app.GetTableParams(ctx).Page == 1 {
+			if model.GetStudentTableParams(ctx).Page == 1 {
 				<span class="btn me-2 border disabled" title="Previous page">
 					Previous
 				</span>
 			} else {
 				<a
 					class="btn me-2 btn-light border"
-					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(app.GetTableParams(ctx).Page-1)).Build() }
+					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(model.GetStudentTableParams(ctx).Page-1)).Build() }
 					title="Previous page"
 				>
 					Previous
@@ -167,7 +169,7 @@ templ recordsPagination(pages int) {
 			<div class="d-inline me-2">
 				for i := 1; i <= pages; i++ {
 					<a
-						if app.GetTableParams(ctx).Page == i {
+						if model.GetStudentTableParams(ctx).Page == i {
 							class="btn btn-dark"
 							aria-current="true"
 						} else {
@@ -180,14 +182,14 @@ templ recordsPagination(pages int) {
 					</a>
 				}
 			</div>
-			if app.GetTableParams(ctx).Page == pages {
+			if model.GetStudentTableParams(ctx).Page == pages {
 				<span class="btn me-2 border disabled" title="Next page">
 					Next
 				</span>
 			} else {
 				<a
 					class="btn me-2 btn-light border"
-					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(app.GetTableParams(ctx).Page+1)).Build() }
+					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(model.GetStudentTableParams(ctx).Page+1)).Build() }
 					title="Next page"
 				>
 					Next
@@ -197,13 +199,13 @@ templ recordsPagination(pages int) {
 	}
 }
 
-templ recordsHeaderColumn(column app.StudentRecordColumn) {
+templ studentColumnHeader(column model.StudentColumn) {
 	<th class="p-1 pt-0">
 		<a
-			if column.Name == app.GetTableParams(ctx).Sortby {
+			if column.Name == model.GetStudentTableParams(ctx).Sortby {
 				class="btn px-2 w-100 fw-bold btn-dark"
 				aria-current="true"
-				if app.GetTableParams(ctx).Order == "asc" {
+				if model.GetStudentTableParams(ctx).Order == "asc" {
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "desc").Without("page").Build() }
 				} else {
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "asc").Without("page").Build() }
@@ -223,31 +225,31 @@ script confirmPopup(message string) {
     return confirm(message);
 }
 
-templ recordRowActions(record app.StudentRecord) {
+templ studentRowActions(student model.StudentRecord) {
 	<td class="p-1">
 		<a
 			class="px-2 py-1 dropdown-toggle dropdown-symbol-none btn btn-light text-black border w-100"
 			role="button"
 			data-bs-toggle="dropdown"
 			href="#"
-			title={ fmt.Sprintf("Actions for %v", record.FirstName) }
+			title={ fmt.Sprintf("Actions for %v", student.FirstName) }
 		>
 			▼
 		</a>
 		<div class="dropdown">
 			<ul class="dropdown-menu">
 				<li>
-					<a class="dropdown-item" href={ templ.URL(fmt.Sprintf("/update/%v", record.Id)) }>
-						Update { record.FirstName }
+					<a class="dropdown-item" href={ templ.URL(fmt.Sprintf("/update/%v", student.Id)) }>
+						Update { student.FirstName }
 					</a>
 				</li>
 				<li>
 					<a
 						class="dropdown-item link-danger"
-						href={ templ.URL(fmt.Sprintf("/delete/%v", record.Id)) }
-						onClick={ confirmPopup(fmt.Sprintf("Are you sure you want to delete %v?", record.FirstName)) }
+						href={ templ.URL(fmt.Sprintf("/delete/%v", student.Id)) }
+						onClick={ confirmPopup(fmt.Sprintf("Are you sure you want to delete %v?", student.FirstName)) }
 					>
-						Delete { record.FirstName }
+						Delete { student.FirstName }
 					</a>
 				</li>
 			</ul>
@@ -255,40 +257,40 @@ templ recordRowActions(record app.StudentRecord) {
 	</td>
 }
 
-templ recordRow(record app.StudentRecord) {
+templ studentRow(student model.StudentRecord) {
 	<tr>
-		@recordRowActions(record)
+		@studentRowActions(student)
 		<td class="text-end">
-			{ fmt.Sprint(record.Id) }
+			{ fmt.Sprint(student.Id) }
 		</td>
 		<td>
 			<strong>
-				{ record.FirstName }
+				{ student.FirstName }
 			</strong>
 		</td>
 		<td>
 			<strong>
-				{ record.LastName }
+				{ student.LastName }
 			</strong>
 		</td>
 		<td class="p-1">
 			<span
-				if record.Gpa <= 2 {
+				if student.Gpa <= 2 {
 					class="d-block p-1 rounded text-center text-bg-danger"
 				} else {
-					if record.Gpa >= 3.5 {
+					if student.Gpa >= 3.5 {
 						class="d-block p-1 rounded text-center text-bg-success"
 					} else {
 						class="d-block p-1 rounded text-center"
 					}
 				}
 			>
-				{ fmt.Sprintf("%2.2f", record.Gpa) }
+				{ fmt.Sprintf("%2.2f", student.Gpa) }
 			</span>
 		</td>
 		<td>
-			if len(record.DegreeProgram) > 0 {
-				{ record.DegreeProgram }
+			if len(student.DegreeProgram) > 0 {
+				{ student.DegreeProgram }
 			} else {
 				<em>
 					Undeclared
@@ -296,8 +298,8 @@ templ recordRow(record app.StudentRecord) {
 			}
 		</td>
 		<td class="text-center">
-			if len(record.GraduationDate) > 0 {
-				{ app.DisplayDate(record.GraduationDate) }
+			if len(student.GraduationDate) > 0 {
+				{ value.DisplayDate(student.GraduationDate) }
 			} else {
 				<em>
 					Unset
@@ -305,32 +307,32 @@ templ recordRow(record app.StudentRecord) {
 			}
 		</td>
 		<td class="text-center">
-			if record.FinancialAid != 0 {
+			if student.FinancialAid != 0 {
 				✅
 			}
 		</td>
 		<td>
-			{ record.Email }
+			{ student.Email }
 		</td>
 		<td class="text-center">
-			{ record.Phone }
+			{ student.Phone }
 		</td>
 	</tr>
 }
 
-templ recordsTable(records []app.StudentRecord) {
+templ studentsTable(students []model.StudentRecord) {
 	<div class="table-responsive text-nowrap mb-3">
 		<table class="table table-hover table-borderless mt-1 mb-0">
 			<thead>
 				<tr>
 					<td></td>
-					for _, column := range app.GetStudentColumns() {
-						@recordsHeaderColumn(column)
+					for _, column := range model.GetStudentColumns() {
+						@studentColumnHeader(column)
 					}
 				</tr>
 			</thead>
-			for _, record := range records {
-				@recordRow(record)
+			for _, student := range students {
+				@studentRow(student)
 			}
 		</table>
 	</div>

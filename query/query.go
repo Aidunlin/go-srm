@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/Aidunlin/go-srm/app"
+	"github.com/Aidunlin/go-srm/model"
 	"github.com/a-h/templ"
 )
 
@@ -47,7 +47,7 @@ func (q QueryBuilder) WithUrlValues(values url.Values) QueryBuilder {
 
 // Gets and sets values from all the table parameters.
 func (q QueryBuilder) WithTableParams() QueryBuilder {
-	p := app.GetTableParams(q.ctx)
+	p := model.GetStudentTableParams(q.ctx)
 	if len(p.Filter) > 0 {
 		q.values.Set("filter", p.Filter)
 	}
@@ -62,7 +62,7 @@ func (q QueryBuilder) WithTableParams() QueryBuilder {
 
 // Gets and sets values from all the advanced search parameters.
 func (q QueryBuilder) WithAdvancedSearch() QueryBuilder {
-	p := app.GetFormParams(q.ctx)
+	p := model.GetAdvancedSearchForm(q.ctx).ToMap()
 	return q.WithMap(p)
 }
 
