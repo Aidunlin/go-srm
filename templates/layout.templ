@@ -34,7 +34,7 @@ templ displayErrors(errors []string) {
 	</div>
 }
 
-templ layout(path, title string) {
+templ layout(path, title string, isAuthed bool) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -61,8 +61,16 @@ templ layout(path, title string) {
 					<div class="collapse navbar-collapse" id="navbarSupportedContent">
 						<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 							@navLink("/", "Home", path)
-							@navLink("/create", "Create Record", path)
+							if isAuthed {
+								@navLink("/create", "Create Record", path)
+							}
 							@navLink("/advanced-search", "Advanced Search", path)
+							if isAuthed {
+								@navLink("/logout", "Logout", path)
+							} else {
+								@navLink("/register", "Register", path)
+								@navLink("/login", "Login", path)
+							}
 						</ul>
 						<form class="d-flex" action="/search" method="get">
 							<input class="form-control me-2" type="search" name="q" placeholder="Search" aria-label="Search"/>

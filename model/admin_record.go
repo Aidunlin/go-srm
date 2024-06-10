@@ -53,7 +53,7 @@ func NewAdminRecordFromRegisterForm(params url.Values) (AdminRecord, []string) {
 
 	password := params.Get("password")
 	if len(password) >= 8 {
-		hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MaxCost)
+		hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 		if err != nil {
 			errors = append(errors, "Could not hash your <strong>password</strong>!")
 		} else {
@@ -79,7 +79,7 @@ func NewAdminRecordFromLoginForm(params url.Values) (AdminRecord, []string) {
 
 	password := params.Get("password")
 	if len(password) > 0 {
-		hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MaxCost)
+		hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 		if err != nil {
 			errors = append(errors, "Could not hash your <strong>password</strong>!")
 		} else {

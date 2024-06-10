@@ -5,8 +5,8 @@ import (
 	"github.com/Aidunlin/go-srm/model"
 )
 
-templ IndexPage(totalStudents int64, students []model.StudentRecord) {
-	@layout("/", "All Students") {
+templ IndexPage(totalStudents int64, students []model.StudentRecord, isAuthed bool) {
+	@layout("/", "All Students", isAuthed) {
 		<main class="container-xxl my-5">
 			<h2 class="alert alert-primary">
 				All Students
@@ -25,7 +25,7 @@ templ IndexPage(totalStudents int64, students []model.StudentRecord) {
 }
 
 templ RegisterPage(admin model.AdminRecord, errors []string) {
-	@layout("/register", "Register") {
+	@layout("/register", "Register", false) {
 		<main class="container">
 			<div class="row justify-content-center my-5">
 				<div class="col-12 col-lg-6">
@@ -43,7 +43,7 @@ templ RegisterPage(admin model.AdminRecord, errors []string) {
 }
 
 templ LoginPage(admin model.AdminRecord, errors []string) {
-	@layout("/login", "Log In") {
+	@layout("/login", "Log In", false) {
 		<main class="container">
 			<div class="row justify-content-center my-5">
 				<div class="col-12 col-lg-6">
@@ -60,8 +60,8 @@ templ LoginPage(admin model.AdminRecord, errors []string) {
 	}
 }
 
-templ SearchPage(totalStudents int64, students []model.StudentRecord) {
-	@layout("/search", "Search Students") {
+templ SearchPage(totalStudents int64, students []model.StudentRecord, isAuthed bool) {
+	@layout("/search", "Search Students", isAuthed) {
 		<main class="container-xxl my-5">
 			<h2 class="alert alert-primary">
 				Search Students
@@ -81,8 +81,8 @@ templ SearchPage(totalStudents int64, students []model.StudentRecord) {
 	}
 }
 
-templ AdvancedSearchPage(form model.AdvancedSearchForm, totalStudents int64, students []model.StudentRecord, searched bool) {
-	@layout("/advanced-search", "Advanced Search") {
+templ AdvancedSearchPage(form model.AdvancedSearchForm, totalStudents int64, students []model.StudentRecord, searched bool, isAuthed bool) {
+	@layout("/advanced-search", "Advanced Search", isAuthed) {
 		<main class="container-xxl">
 			<div class="row my-5">
 				<div class="col-12 col-md-3">
@@ -112,7 +112,7 @@ templ AdvancedSearchPage(form model.AdvancedSearchForm, totalStudents int64, stu
 }
 
 templ CreatePage(student model.StudentRecord, errors []string) {
-	@layout("/create", "Create Student") {
+	@layout("/create", "Create Student", true) {
 		<main class="container">
 			<div class="row justify-content-center my-5">
 				<div class="col-12 col-lg-6">
@@ -130,7 +130,7 @@ templ CreatePage(student model.StudentRecord, errors []string) {
 }
 
 templ UpdatePage(student model.StudentRecord, errors []string) {
-	@layout("/update", "Update Student") {
+	@layout("/update", "Update Student", true) {
 		<main class="container">
 			<div class="row justify-content-center my-5">
 				<div class="col-12 col-lg-6">
