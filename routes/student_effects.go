@@ -11,7 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func AddListsRoutes(e *echo.Echo) {
+func AddEffectRoutes(e *echo.Echo) {
 	e.GET("/create", getCreate)
 	e.POST("/create", postCreate)
 	e.GET("/update/:id", getUpdate)

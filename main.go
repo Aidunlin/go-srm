@@ -16,7 +16,7 @@ func main() {
 	e.Static("/css", "css")
 
 	routes.AddMainRoutes(e)
-	routes.AddListsRoutes(e)
+	routes.AddEffectRoutes(e)
 	routes.AddAuthRoutes(e)
 
 	e.Logger.Fatal((e.Start(":3000")))
