@@ -12,10 +12,10 @@ import (
 templ studentsFilterAll() {
 	<a
 		if len(model.GetStudentTableParams(ctx).Filter) == 0 {
-			class="btn me-2 btn-dark fw-bold"
+			class="btn me-2 btn-primary fw-bold"
 			aria-current="true"
 		} else {
-			class="btn me-2 btn-light border"
+			class="btn me-2 btn-dark border"
 		}
 		href={ query.New(ctx).WithTableParams().Without("filter", "page").Build() }
 	>
@@ -26,10 +26,10 @@ templ studentsFilterAll() {
 templ studentsFilterLetter(letter string) {
 	<a
 		if model.GetStudentTableParams(ctx).Filter == letter {
-			class="btn text-uppercase btn-dark fw-bold"
+			class="btn text-uppercase btn-primary fw-bold"
 			aria-current="true"
 		} else {
-			class="btn text-uppercase btn-light border"
+			class="btn text-uppercase btn-dark border"
 		}
 		href={ query.New(ctx).WithTableParams().With("filter", letter).Without("page").Build() }
 		title={ fmt.Sprintf("Letter %v", strings.ToUpper(letter)) }
@@ -85,7 +85,7 @@ templ studentsSortMenuItem(column model.StudentColumn) {
 	<li>
 		<a
 			if column.Name == model.GetStudentTableParams(ctx).Sortby {
-				class="dropdown-item text-bg-dark"
+				class="dropdown-item text-bg-primary"
 				if model.GetStudentTableParams(ctx).Order == "asc" {
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "desc").Build() }
 				} else {
@@ -105,10 +105,10 @@ templ studentsSortMenuItem(column model.StudentColumn) {
 templ studentsSortOrder(order, label string) {
 	<a
 		if model.GetStudentTableParams(ctx).Order == order {
-			class="btn btn-dark border"
+			class="btn btn-primary"
 			aria-current="true"
 		} else {
-			class="btn btn-light border"
+			class="btn btn-dark border"
 		}
 		href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", order).Without("page").Build() }
 		title={ fmt.Sprintf("%v Order", label) }
@@ -125,7 +125,7 @@ templ studentsSortControls() {
 		</span>
 		<div class="dropdown d-inline-block">
 			<button
-				class="btn btn-light border dropdown-toggle me-2"
+				class="btn btn-dark border dropdown-toggle me-2"
 				title="Columns"
 				type="button"
 				data-bs-toggle="dropdown"
@@ -158,7 +158,7 @@ templ studentsPagination(pages int) {
 				</span>
 			} else {
 				<a
-					class="btn me-2 btn-light border"
+					class="btn me-2 btn-dark border"
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(model.GetStudentTableParams(ctx).Page-1)).Build() }
 					title="Previous page"
 				>
@@ -169,10 +169,10 @@ templ studentsPagination(pages int) {
 				for i := 1; i <= pages; i++ {
 					<a
 						if model.GetStudentTableParams(ctx).Page == i {
-							class="btn btn-dark"
+							class="btn btn-primary"
 							aria-current="true"
 						} else {
-							class="btn btn-light border"
+							class="btn btn-dark border"
 						}
 						href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(i)).Build() }
 						title={ fmt.Sprintf("Page %v", i) }
@@ -187,7 +187,7 @@ templ studentsPagination(pages int) {
 				</span>
 			} else {
 				<a
-					class="btn me-2 btn-light border"
+					class="btn me-2 btn-dark border"
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("page", fmt.Sprint(model.GetStudentTableParams(ctx).Page+1)).Build() }
 					title="Next page"
 				>
@@ -202,7 +202,7 @@ templ studentColumnHeader(column model.StudentColumn) {
 	<th class="p-1 pt-0">
 		<a
 			if column.Name == model.GetStudentTableParams(ctx).Sortby {
-				class="btn px-2 w-100 fw-bold btn-dark"
+				class="btn px-2 w-100 fw-bold btn-primary"
 				aria-current="true"
 				if model.GetStudentTableParams(ctx).Order == "asc" {
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "desc").Without("page").Build() }
@@ -210,7 +210,7 @@ templ studentColumnHeader(column model.StudentColumn) {
 					href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("order", "asc").Without("page").Build() }
 				}
 			} else {
-				class="btn px-2 w-100 fw-bold btn-light text-black border"
+				class="btn px-2 w-100 fw-bold btn-dark border"
 				href={ query.New(ctx).WithTableParams().WithAdvancedSearch().With("sortby", column.Name).With("order", "asc").Without("page").Build() }
 			}
 			title={ fmt.Sprintf("Sort by %v", column.Title()) }
@@ -227,7 +227,7 @@ script confirmPopup(message string) {
 templ studentRowActions(student model.StudentRecord) {
 	<td class="p-1">
 		<a
-			class="px-2 py-1 dropdown-toggle dropdown-symbol-none btn btn-light text-black border w-100"
+			class="px-2 py-1 dropdown-toggle dropdown-symbol-none btn btn-dark border w-100"
 			role="button"
 			data-bs-toggle="dropdown"
 			href="#"
@@ -256,9 +256,11 @@ templ studentRowActions(student model.StudentRecord) {
 	</td>
 }
 
-templ studentRow(student model.StudentRecord) {
+templ studentRow(student model.StudentRecord, isAuthed bool) {
 	<tr>
-		@studentRowActions(student)
+		if isAuthed {
+			@studentRowActions(student)
+		}
 		<td class="text-end">
 			{ fmt.Sprint(student.Id) }
 		</td>
@@ -319,19 +321,21 @@ templ studentRow(student model.StudentRecord) {
 	</tr>
 }
 
-templ studentsTable(students []model.StudentRecord) {
+templ studentsTable(students []model.StudentRecord, isAuthed bool) {
 	<div class="table-responsive text-nowrap mb-3">
 		<table class="table table-hover table-borderless mt-1 mb-0">
 			<thead>
 				<tr>
-					<td></td>
+					if isAuthed {
+						<td></td>
+					}
 					for _, column := range model.GetStudentColumns() {
 						@studentColumnHeader(column)
 					}
 				</tr>
 			</thead>
 			for _, student := range students {
-				@studentRow(student)
+				@studentRow(student, isAuthed)
 			}
 		</table>
 	</div>

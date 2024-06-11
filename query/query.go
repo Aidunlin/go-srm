@@ -62,8 +62,11 @@ func (q QueryBuilder) WithTableParams() QueryBuilder {
 
 // Gets and sets values from all the advanced search parameters.
 func (q QueryBuilder) WithAdvancedSearch() QueryBuilder {
-	p := model.GetAdvancedSearchForm(q.ctx).ToMap()
-	return q.WithMap(p)
+	form := model.GetAdvancedSearchForm(q.ctx)
+	if form.Searched {
+		return q.WithMap(form.ToMap())
+	}
+	return q
 }
 
 // Removes specified keys.

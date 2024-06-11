@@ -98,5 +98,5 @@ func GetAdvancedSearchForm(ctx context.Context) AdvancedSearchForm {
 	if params, ok := ctx.Value("form").(AdvancedSearchForm); ok {
 		return params
 	}
-	return NewAdvancedSearchForm(nil)
+	return AdvancedSearchForm{}
 }

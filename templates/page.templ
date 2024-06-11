@@ -6,10 +6,10 @@ import (
 )
 
 templ IndexPage(totalStudents int64, students []model.StudentRecord, isAuthed bool) {
-	@layout("/", "All Students", isAuthed) {
-		<main class="container-xxl my-5">
-			<h2 class="alert alert-primary">
-				All Students
+	@layout("/", "Students", isAuthed) {
+		<main class="container-xxl my-4">
+			<h2 class="display-6 my-3">
+				Students
 			</h2>
 			@studentsFilterControls()
 			@studentsCount(totalStudents)
@@ -17,7 +17,7 @@ templ IndexPage(totalStudents int64, students []model.StudentRecord, isAuthed bo
 			if (len(students) > 0) {
 				@studentsSortControls()
 				@studentsPagination(db.GetTotalPages(totalStudents))
-				@studentsTable(students)
+				@studentsTable(students, isAuthed)
 				@studentsPagination(db.GetTotalPages(totalStudents))
 			}
 		</main>
@@ -27,9 +27,9 @@ templ IndexPage(totalStudents int64, students []model.StudentRecord, isAuthed bo
 templ RegisterPage(admin model.AdminRecord, errors []string) {
 	@layout("/register", "Register", false) {
 		<main class="container">
-			<div class="row justify-content-center my-5">
+			<div class="row justify-content-center my-4">
 				<div class="col-12 col-lg-6">
-					<h2 class="alert alert-primary">
+					<h2 class="display-6 my-3">
 						Register
 					</h2>
 					if len(errors) > 0 {
@@ -45,9 +45,9 @@ templ RegisterPage(admin model.AdminRecord, errors []string) {
 templ LoginPage(admin model.AdminRecord, errors []string) {
 	@layout("/login", "Log In", false) {
 		<main class="container">
-			<div class="row justify-content-center my-5">
+			<div class="row justify-content-center my-4">
 				<div class="col-12 col-lg-6">
-					<h2 class="alert alert-primary">
+					<h2 class="display-6 my-3">
 						Log In
 					</h2>
 					if len(errors) > 0 {
@@ -62,18 +62,18 @@ templ LoginPage(admin model.AdminRecord, errors []string) {
 
 templ SearchPage(totalStudents int64, students []model.StudentRecord, isAuthed bool) {
 	@layout("/search", "Search Students", isAuthed) {
-		<main class="container-xxl my-5">
-			<h2 class="alert alert-primary">
+		<main class="container-xxl my-4">
+			<h2 class="display-6 my-3">
 				Search Students
 			</h2>
 			if len(model.GetStudentTableParams(ctx).Search) == 0 {
-                <p class="alert alert-warning">Empty query, please try again</p>
+				<p class="alert alert-warning">Empty query, please try again</p>
 			} else {
 				@studentsCount(totalStudents)
 				if len(students) > 0 {
 					@studentsSortControls()
 					@studentsPagination(db.GetTotalPages(totalStudents))
-					@studentsTable(students)
+					@studentsTable(students, isAuthed)
 					@studentsPagination(db.GetTotalPages(totalStudents))
 				}
 			}
@@ -84,14 +84,14 @@ templ SearchPage(totalStudents int64, students []model.StudentRecord, isAuthed b
 templ AdvancedSearchPage(form model.AdvancedSearchForm, totalStudents int64, students []model.StudentRecord, searched bool, isAuthed bool) {
 	@layout("/advanced-search", "Advanced Search", isAuthed) {
 		<main class="container-xxl">
-			<div class="row my-5">
+			<div class="row my-4">
 				<div class="col-12 col-md-3">
-					<h2 class="alert alert-primary">
+					<h2 class="display-6 my-3">
 						Advanced Search
 					</h2>
 					@advancedSearchForm(form, "Any", "Search")
 				</div>
-				<div class="col-12 col-md-9">
+				<div class="col-12 col-md-9 my-3">
 					if searched {
 						@studentsCount(totalStudents)
 					} else {
@@ -102,7 +102,7 @@ templ AdvancedSearchPage(form model.AdvancedSearchForm, totalStudents int64, stu
 					if len(students) > 0 {
 						@studentsSortControls()
 						@studentsPagination(db.GetTotalPages(totalStudents))
-						@studentsTable(students)
+						@studentsTable(students, isAuthed)
 						@studentsPagination(db.GetTotalPages(totalStudents))
 					}
 				</div>
@@ -114,15 +114,15 @@ templ AdvancedSearchPage(form model.AdvancedSearchForm, totalStudents int64, stu
 templ CreatePage(student model.StudentRecord, errors []string) {
 	@layout("/create", "Create Student", true) {
 		<main class="container">
-			<div class="row justify-content-center my-5">
+			<div class="row justify-content-center my-4">
 				<div class="col-12 col-lg-6">
-					<h2 class="alert alert-primary">
+					<h2 class="display-6 my-3">
 						Create Student
 					</h2>
 					if len(errors) > 0 {
 						@displayErrors(errors)
 					}
-					@studentForm(student, "Undeclared", "Create")
+					@studentForm(student, "Create")
 				</div>
 			</div>
 		</main>
@@ -132,15 +132,15 @@ templ CreatePage(student model.StudentRecord, errors []string) {
 templ UpdatePage(student model.StudentRecord, errors []string) {
 	@layout("/update", "Update Student", true) {
 		<main class="container">
-			<div class="row justify-content-center my-5">
+			<div class="row justify-content-center my-4">
 				<div class="col-12 col-lg-6">
-					<h2 class="alert alert-primary">
+					<h2 class="display-6 my-3">
 						Update Student
 					</h2>
 					if len(errors) > 0 {
 						@displayErrors(errors)
 					}
-					@studentForm(student, "Undeclared", "Update")
+					@studentForm(student, "Update")
 				</div>
 			</div>
 		</main>

@@ -34,10 +34,10 @@ templ registerForm(admin model.AdminRecord) {
 			<input class="form-control" type="password" name="password" id="password"/>
 		</div>
 		<div class="mt-4 mb-3">
-			<a class="btn btn-light border me-2" href="/">
+			<a class="btn btn-secondary me-2" href="/">
 				Cancel
 			</a>
-			<button class="btn btn-dark" type="submit">
+			<button class="btn btn-primary" type="submit">
 				Register
 			</button>
 		</div>
@@ -59,17 +59,17 @@ templ loginForm(admin model.AdminRecord) {
 			<input class="form-control" type="password" name="password" id="password"/>
 		</div>
 		<div class="mt-4 mb-3">
-			<a class="btn btn-light border me-2" href="/">
+			<a class="btn btn-secondary me-2" href="/">
 				Cancel
 			</a>
-			<button class="btn btn-dark" type="submit">
+			<button class="btn btn-primary" type="submit">
 				Log In
 			</button>
 		</div>
 	</form>
 }
 
-templ studentForm(form model.StudentRecord, defaultDegreeLabel string, buttonLabel string) {
+templ studentForm(form model.StudentRecord, buttonLabel string) {
 	<form method="post">
 		<div class="mb-3">
 			<label class="col-form-label" for="first_name">
@@ -106,7 +106,7 @@ templ studentForm(form model.StudentRecord, defaultDegreeLabel string, buttonLab
 			</label>
 			<select class="form-select" name="degree_program" id="degree_program">
 				<option value="">
-					{ defaultDegreeLabel }
+					Undeclared
 				</option>
 				for _, degree := range value.GetDegrees() {
 					<option value={ degree } selected?={ form.DegreeProgram == degree }>
@@ -151,10 +151,10 @@ templ studentForm(form model.StudentRecord, defaultDegreeLabel string, buttonLab
 			<input class="form-control" type="text" id="phone" name="phone" value={ form.Phone }/>
 		</div>
 		<div class="mt-4 mb-3">
-			<a class="btn btn-light border me-2" href="/">
+			<a class="btn btn-secondary me-2" href="/">
 				Cancel
 			</a>
-			<button class="btn btn-dark" type="submit">
+			<button class="btn btn-primary" type="submit">
 				{ buttonLabel }
 			</button>
 		</div>
@@ -243,10 +243,10 @@ templ advancedSearchForm(form model.AdvancedSearchForm, defaultDegreeLabel strin
 			<input class="form-control" type="text" id="phone" name="phone" value={ form.Phone }/>
 		</div>
 		<div class="mt-4 mb-3">
-			<a class="btn btn-light border me-2" href="/">
+			<a class="btn btn-secondary me-2" href="/">
 				Cancel
 			</a>
-			<button class="btn btn-dark" type="submit">
+			<button class="btn btn-primary" type="submit">
 				{ buttonLabel }
 			</button>
 		</div>
